@@ -1,0 +1,16 @@
+{
+  "name": "cairn",
+  "version": "0.1.0",
+  "description": "A durable, pace-layered documentation spine for any project — code or not. Scaffolds five strata, each under a fixed one-question contract.",
+  "author": {
+    "name": "Johnathan Hyden"
+  },
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "scaffolder",
+    "adr",
+    "pace-layering",
+    "docs-as-code"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cairn",
+  "owner": {
+    "name": "Johnathan Hyden"
+  },
+  "plugins": [
+    {
+      "name": "cairn",
+      "source": "./",
+      "description": "A durable, pace-layered documentation spine for any project — code or not."
+    }
+  ]
+}

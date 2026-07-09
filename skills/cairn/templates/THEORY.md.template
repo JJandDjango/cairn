@@ -1,0 +1,19 @@
+# Theory - {{ project_name }}
+
+> **Contract** - one question: *why does this exist, and what must stay true?*
+> <=1 page - update when purpose or invariants change - hand-edited, rare.
+
+## Intent
+{{ intent }}
+
+## Invariants
+<!-- What must stay true no matter what changes below. The load-bearing constraints. -->
+-
+
+## Success criteria
+<!-- How you'll know it's working. -->
+-
+
+## Non-goals
+<!-- What this explicitly does NOT try to do - the anti-scope that stops drift. -->
+-
