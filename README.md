@@ -9,6 +9,9 @@ exactly — **append-only, pace-layered, for wayfinding.**
 Cairn scaffolds a **pace-layered** documentation spine: five files, each changing
 at its own rate under a fixed contract, so fast edits never tear slow truth.
 
+> **Want to use it? → [USAGE.md](USAGE.md)** — the explicit step-by-step guide:
+> invoke → interview (answer-by-answer) → outputs → day-2 workflow → worked example.
+
 ## The five strata
 
 | Stratum | Question it answers | Budget | Update trigger | Mode |
