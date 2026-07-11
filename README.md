@@ -17,7 +17,7 @@ at its own rate under a fixed contract, so fast edits never tear slow truth.
 | Stratum | Question it answers | Budget | Update trigger | Mode |
 |---|---|---|---|---|
 | `THEORY.md` | Why exist? What must stay true? | ≤1 page | purpose / invariants change | hand-edited, rare |
-| `MAP.md` | What are the pieces & how connected? | ≤2 pages | piece add / remove / rewire | hand-edited (or ATLAS-derived) |
+| `MAP.md` | What are the pieces & how connected? | ≤2 pages | piece add / remove / rewire | hand-edited (or graphify-derived) |
 | `decisions/` | Why done this way? | ≤½ page each | a new significant decision | append-only, never edited |
 | `docs/` | How does each piece work? | mirrors structure | internals change | authored on touch (or generated) |
 | `STATE.md` | What's in flight now? | ≤1 page | every session end | regenerated, disposable |
@@ -65,15 +65,16 @@ python skills/cairn/render.py --cwd ./my-project --answers '{
 ## How it works
 
 `/cairn` interviews you — name, one-line intent, project type, greenfield vs
-brownfield, and (for code) whether to wire an optional ATLAS/graphify backend —
+brownfield, and (for code) whether to wire an optional graphify backend —
 then renders the strata into your project. It **never overwrites** an existing
 file: run it on a half-documented project and it fills only the gaps.
 
 - **Greenfield** authors `THEORY.md` now.
 - **Brownfield** marks inferred intent `(inferred — confirm)` for the owner to correct.
 - **Non-code** projects drop the diagram mandate and rename the component unit.
-- **The `atlas` backend** (code only) points `MAP.md` at `/atlas init` and adds
-  `graphify-out/` + `/manifest.json` to `.gitignore` — it never reimplements ATLAS.
+- **The `graphify` backend** (code only) adds an optional structured-MAP stub and
+  `graphify-out/` + `/manifest.json` to `.gitignore`; `/cairn derive`/`reconcile`/`view`
+  build and reconcile a structured MAP from the code graph.
 
 ## Principle
 

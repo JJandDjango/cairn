@@ -1,4 +1,4 @@
-# Map - {{ project_name }}
+{{ map_structured_stub }}# Map - {{ project_name }}
 
 > **Contract** - one question: *what are the pieces, and how do they connect?*
 > <=2 pages - update on add / remove / rewire of a {{ component_unit_col }} - {{ map_mode }}.

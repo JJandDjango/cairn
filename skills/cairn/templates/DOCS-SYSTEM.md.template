@@ -21,7 +21,7 @@ Scaffolded by **Cairn** - a durable documentation spine for any project.
 - **ADRs are append-only.** Never edit one; supersede it with a new record (mark the old `superseded by NNNN`). Copy `decisions/ADR-template.md` to start a new record.
 - **One diagram per project**, in `MAP.md`, at ~container zoom. Nothing deeper - it rots faster than you can maintain it.
 - **`STATE.md` is disposable** - regenerate it at session end; never hand-patch it mid-session.
-- **Definition of done includes the doc touch** - a change to a {{ component_unit_col }}'s responsibility updates its `MAP.md` row (and its `docs/` page if one exists).
+- **Definition of done includes the doc touch** - a change to a {{ component_unit_col }}'s responsibility updates its `MAP.md` row (and its `docs/` page if one exists).{{ backend_note }}
 
 ## Audit checklist
 - [ ] ADRs are never edited; superseding records exist where decisions changed.

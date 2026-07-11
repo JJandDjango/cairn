@@ -13,15 +13,15 @@ Answer keys (all required):
   project_name  (str)   e.g. "my-novel"
   intent        (str)   one line: "why does this exist?"
   project_type  (str)   code | novel | content-site | business | research
-  backend       (str)   none | atlas   (atlas only meaningful for code)
+  backend       (str)   none | graphify   (graphify only meaningful for code)
   material      (str)   greenfield | brownfield
 
 Behavior:
   - {{ var }} substitution across templates (including nested decisions/).
   - date.today() stamps STATE.md and the seed ADR.
   - project_type -> component unit (Component / Chapter / Section / ...).
-  - backend=atlas (code only) -> MAP points at `/atlas init`; .gitignore gains
-    graphify-out/ + /manifest.json.
+  - backend=graphify (code only) -> MAP gains an optional structured-schema stub
+    and points at `/cairn derive`; .gitignore gains graphify-out/ + /manifest.json.
   - material=brownfield -> intent rendered with an `(inferred - confirm)` tag.
   - NO-CLOBBER: any target that already exists is skipped and reported, never
     overwritten (safe to run on a partly-documented project).
@@ -59,8 +59,8 @@ COMPONENT_UNIT = {
     "research": ("Claim", "Claims"),
 }
 
-# .gitignore entries added ONLY when the ATLAS/graphify backend is chosen.
-ATLAS_GITIGNORE_ENTRIES = ["graphify-out/", "/manifest.json"]
+# .gitignore entries added ONLY when the graphify backend is chosen.
+BACKEND_GITIGNORE_ENTRIES = ["graphify-out/", "/manifest.json"]
 
 CODE_DIAGRAM_NOTE = (
     "```mermaid\n"
@@ -77,6 +77,54 @@ NONCODE_DIAGRAM_NOTE = (
 )
 
 
+def _structured_map_stub(project_name: str, purpose: str) -> str:
+    """OPTIONAL structured-model stub prepended to MAP.md for graphify-backend code
+    projects (Slice 2, Decision C). A commented block mirroring backend/schema.py so
+    the schema is discoverable without forcing frontmatter onto a fresh MAP: a
+    hand-author uncomments and fills it, or `/cairn derive` generates it from the
+    code graph. Returns "" for every non-backend project -> that MAP renders
+    unchanged. Values are interpolated here (not via {{ }}) so the single-pass
+    substitutor never rescans this block. `atlas_schema` is the schema version key
+    (backend/schema.py), not the retired backend name."""
+    return (
+        "<!-- OPTIONAL structured model - graphify-backend projects only.\n"
+        "     Uncomment the YAML and fill it, or run `/cairn derive` to generate it\n"
+        "     from the code graph (then `/cairn reconcile` to keep authored vs\n"
+        "     derived honest). Schema + validation: backend/schema.py.\n"
+        "\n"
+        "atlas_schema: 1\n"
+        f"name: {project_name}\n"
+        f"purpose: {purpose}\n"
+        "status: active            # greenfield | active | maintenance | archived\n"
+        "components:                # >=1 required once uncommented\n"
+        "  - name: example-component\n"
+        "    role: what it does (one line)\n"
+        "    level: module          # system | module | implementation\n"
+        "    location: path/to/file.py\n"
+        "# flows:                   # optional: named paths through >=2 components\n"
+        "#   - name: main-flow\n"
+        "#     entry: example-component\n"
+        "#     stages:\n"
+        "#       - component: example-component\n"
+        "#         role: start\n"
+        "#         stage: entry\n"
+        "-->\n\n"
+    )
+
+
+def _docs_backend_note() -> str:
+    """The optional-backend bullet appended to DOCS-SYSTEM.md for graphify-backend
+    projects. Returns "" otherwise -> that DOCS-SYSTEM renders unchanged."""
+    return (
+        "\n- **Optional structured MAP (backend projects).** With the graphify "
+        "backend, `MAP.md` may carry a YAML frontmatter model (components / flows / "
+        "typed relationships; schema in `backend/schema.py`). Generate it with "
+        "`/cairn derive`, reconcile authored vs derived with `/cairn reconcile`, and "
+        "roll up the portfolio with `/cairn view`. Without the backend, `MAP.md` is a "
+        "hand-edited table - no frontmatter required."
+    )
+
+
 def substitute(template_text: str, variables: dict) -> str:
     """Substitute {{ var }} placeholders in one pass."""
     pattern = re.compile(r"\{\{\s*(\w+)\s*\}\}")
@@ -91,9 +139,9 @@ def substitute(template_text: str, variables: dict) -> str:
 
 
 def effective_backend(answers: dict) -> str:
-    """The ATLAS backend is only meaningful for code; coerce to none otherwise."""
+    """The graphify backend is only meaningful for code; coerce to none otherwise."""
     backend = answers.get("backend", "none")
-    if backend == "atlas" and answers.get("project_type") != "code":
+    if backend == "graphify" and answers.get("project_type") != "code":
         return "none"
     return backend
 
@@ -110,29 +158,35 @@ def build_var_dict(answers: dict, today: str) -> dict:
         raise ValueError(
             f"material must be 'greenfield' or 'brownfield', got {material!r}"
         )
-    if answers.get("backend") not in {"none", "atlas"}:
+    if answers.get("backend") not in {"none", "graphify"}:
         raise ValueError(
-            f"backend must be 'none' or 'atlas', got {answers.get('backend')!r}"
+            f"backend must be 'none' or 'graphify', got {answers.get('backend')!r}"
         )
 
     backend = effective_backend(answers)
     unit_col, unit_plural = COMPONENT_UNIT[project_type]
 
-    intent = str(answers["intent"]).strip()
-    if not intent:
+    intent_plain = str(answers["intent"]).strip()
+    if not intent_plain:
         raise ValueError("intent must be a non-empty one-line string")
-    if material == "brownfield":
-        intent = f"{intent} _(inferred - confirm)_"
+    intent = (
+        f"{intent_plain} _(inferred - confirm)_" if material == "brownfield"
+        else intent_plain
+    )
 
     diagram_note = CODE_DIAGRAM_NOTE if project_type == "code" else NONCODE_DIAGRAM_NOTE
 
-    if backend == "atlas":
+    if backend == "graphify":
         map_mode = (
-            "hand-edited **or** ATLAS-derived (run `/atlas init` to regenerate the "
-            "component table from the code graph)"
+            "hand-edited **or** graphify-derived (run `/cairn derive` to regenerate "
+            "the component table from the code graph)"
         )
+        map_structured_stub = _structured_map_stub(answers["project_name"], intent_plain)
+        backend_note = _docs_backend_note()
     else:
         map_mode = "hand-edited"
+        map_structured_stub = ""
+        backend_note = ""
 
     return {
         "project_name": answers["project_name"],
@@ -142,6 +196,8 @@ def build_var_dict(answers: dict, today: str) -> dict:
         "component_unit_plural": unit_plural,
         "diagram_note": diagram_note,
         "map_mode": map_mode,
+        "map_structured_stub": map_structured_stub,
+        "backend_note": backend_note,
         "date": today,
     }
 
@@ -180,14 +236,14 @@ def render_all(answers: dict, templates_dir: Path, cwd: Path, today: str):
 
 
 def update_gitignore(cwd: Path, backend: str) -> bool:
-    """Append ATLAS-backend entries to .gitignore. Returns True if modified."""
-    if backend != "atlas":
+    """Append graphify-backend entries to .gitignore. Returns True if modified."""
+    if backend != "graphify":
         return False
 
     gitignore = cwd / ".gitignore"
     existing = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
 
-    additions = [e for e in ATLAS_GITIGNORE_ENTRIES if e not in existing]
+    additions = [e for e in BACKEND_GITIGNORE_ENTRIES if e not in existing]
     if not additions:
         return False
 
@@ -197,7 +253,7 @@ def update_gitignore(cwd: Path, backend: str) -> bool:
         lead = "\n"            # prior content ends cleanly: one blank separator
     else:
         lead = "\n\n"          # prior content lacks trailing newline: finish it, then separate
-    block = lead + "# ATLAS/graphify derived artifacts (added by cairn)\n"
+    block = lead + "# graphify derived artifacts (added by cairn)\n"
     block += "".join(f"{e}\n" for e in additions)
 
     gitignore.write_text(existing + block, encoding="utf-8")
@@ -214,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "JSON dict of interview answers. Required keys: project_name (str), "
             "intent (str), project_type (code|novel|content-site|business|research), "
-            "backend (none|atlas), material (greenfield|brownfield)."
+            "backend (none|graphify), material (greenfield|brownfield)."
         ),
     )
     parser.add_argument(

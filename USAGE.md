@@ -77,7 +77,7 @@ Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn    # Windows
 | 2 | **intent** | `THEORY.md`'s Intent — the one-line "why does this exist?" | One sentence. Greenfield: state it. Brownfield: Cairn drafts an inferred line and tags it `_(inferred - confirm)_` for you to correct. |
 | 3 | **project_type** | `code` / `novel` / `content-site` / `business` / `research`. Sets the component label (Component / Chapter / Section / Workstream / Claim) and whether a diagram is expected (code only). | Pick the closest. It only affects labels and the diagram — both are editable later. |
 | 4 | **material** | `greenfield` (author THEORY now) or `brownfield` (infer + mark). | New project → greenfield. Existing project → brownfield, then confirm the inferred intent first thing. |
-| 5 | **backend** *(code only)* | `none` = pure authored markdown. `atlas` = point `MAP.md` at `/atlas init` and add graphify artifacts to `.gitignore`. | Pick **none** unless you already use ATLAS/graphify and want a derived code-graph map. Non-code projects never see this question. |
+| 5 | **backend** *(code only)* | `none` = pure authored markdown. `graphify` = add an optional structured-MAP stub + graphify artifacts to `.gitignore`, and enable `/cairn derive`/`reconcile`/`view`. | Pick **none** unless you use graphify and want a derived, reconciled code-graph map. Non-code projects never see this question. |
 
 ---
 
