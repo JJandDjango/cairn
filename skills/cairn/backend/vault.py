@@ -1,7 +1,7 @@
-"""Atlas vault management: the portfolio overlay at ``~/.claude/atlas/``
-(ATLAS.md sections 5 & 7).
+"""Cairn vault management: the portfolio overlay at ``~/.claude/cairn/``
+(MAP.md sections 5 & 7).
 
-Each project's authored ``ATLAS.md`` is symlinked into the vault as ``<name>.md``
+Each project's authored ``MAP.md`` is symlinked into the vault as ``<name>.md``
 so ``[[name]]`` resolves in Obsidian's graph view. A generated ``index.md`` is
 the portfolio dashboard. Symlinks need Windows Developer Mode (a Pass 1
 prerequisite); we fall back to a copy + marker if symlinks are unavailable.
@@ -14,7 +14,7 @@ from typing import Any
 
 from . import schema
 
-VAULT = Path.home() / ".claude" / "atlas"
+VAULT = Path.home() / ".claude" / "cairn"
 
 
 def ensure_vault() -> Path:
@@ -24,13 +24,13 @@ def ensure_vault() -> Path:
     index = VAULT / "index.md"
     if not index.exists():
         index.write_text(
-            "# Atlas Portfolio\n\n_No projects yet. Run `/atlas init <path>`._\n",
+            "# Cairn Portfolio\n\n_No projects yet. Run `/cairn derive <path>`._\n",
             encoding="utf-8")
     return VAULT
 
 
 def add_project(atlas_md: str | Path) -> Path:
-    """Link a project's ATLAS.md into the vault as ``<name>.md`` (name from
+    """Link a project's MAP.md into the vault as ``<name>.md`` (name from
     frontmatter), then regenerate ``index.md``. Falls back to a copy if symlinks
     are unavailable. Returns the vault entry path."""
     atlas_md = Path(atlas_md).resolve()
@@ -75,9 +75,9 @@ def list_projects() -> list[dict[str, Any]]:
 def render_index() -> str:
     """Generate ``index.md`` content from the current vault projects."""
     projects = list_projects()
-    lines = ["# Atlas Portfolio", ""]
+    lines = ["# Cairn Portfolio", ""]
     if not projects:
-        lines.append("_No projects yet. Run `/atlas init <path>`._")
+        lines.append("_No projects yet. Run `/cairn derive <path>`._")
         return "\n".join(lines) + "\n"
     lines += ["## Projects", "",
               "| Project | Status | Purpose | Components | Flows |",

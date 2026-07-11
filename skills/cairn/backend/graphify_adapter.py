@@ -1,4 +1,4 @@
-"""Thin adapter over graphify, the derived backend (ATLAS.md section 6).
+"""Thin adapter over graphify, the derived backend (MAP.md section 6).
 
 Depends on the *data* (the `graph.json` node-link schema), not graphify's churny
 CLI. Pinned at `graphifyy==0.8.31`; upgrades are deliberate. All graphify CLI
@@ -75,7 +75,7 @@ def update(path: str | Path, timeout: int = 900) -> Path:
 def load_graph(graph_json: str | Path) -> dict[str, Any]:
     """Load graphify's NetworkX node-link `graph.json`.
 
-    Stable contract (the thing Atlas actually depends on):
+    Stable contract (the thing the backend actually depends on):
       nodes[].id / .label / .source_file
       edges[].source / .target / .relation / .confidence / .confidence_score
     NetworkX writes the edge list under "links"; some versions use "edges".

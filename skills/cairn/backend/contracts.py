@@ -8,7 +8,7 @@ the #152 spike proved agents trust without re-reading source.
 
 Theory: the priming latency win comes from handing a stage a trustable, cheap
 orientation map so it stops re-deriving repo structure on every fresh-context
-dispatch. graphify extracts that structure deterministically (``atlas derive``,
+dispatch. graphify extracts that structure deterministically (``cairn derive``,
 0 tokens); this module turns the raw symbol graph into per-file dependency
 contracts — reusing the ``reconcile.py`` rollup pattern — so the map is
 *derived and verifiable*, never hand-fudged. Correctness is load-bearing:

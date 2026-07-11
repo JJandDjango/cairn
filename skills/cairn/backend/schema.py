@@ -1,7 +1,7 @@
-"""ATLAS authored-model schema: parse, validate, serialize ATLAS.md frontmatter.
+"""MAP authored-model schema: parse, validate, serialize MAP.md frontmatter.
 
 The frontmatter (YAML between `---` fences) is the machine-readable contract for
-the *authored* model (ATLAS.md section 4). The derived graph in `graphify-out/`
+the *authored* model (MAP.md section 4). The derived graph in `graphify-out/`
 is a separate artifact (section 6), never merged here except by human acceptance
 (section 2). Keys are snake_case (Dataview-safe); component/flow *names* are
 kebab-case values. Frontmatter is versioned (`atlas_schema`) for migration.
@@ -24,16 +24,16 @@ PRIMITIVE_VALUES = {"model", "prompts", "context", "tools", "runtime"}
 
 
 class AtlasParseError(Exception):
-    """Raised when ATLAS.md cannot be split into frontmatter + body."""
+    """Raised when MAP.md cannot be split into frontmatter + body."""
 
 
 def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
-    """Split an ATLAS.md document into (frontmatter dict, body markdown).
+    """Split an MAP.md document into (frontmatter dict, body markdown).
 
     Expects a leading YAML block delimited by lines that are exactly `---`.
     """
     if not text.startswith("---"):
-        raise AtlasParseError("ATLAS.md must begin with a '---' frontmatter fence")
+        raise AtlasParseError("MAP.md must begin with a '---' frontmatter fence")
     lines = text.splitlines()
     end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
     if end is None:
@@ -46,7 +46,7 @@ def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
 
 
 def parse(path: str | Path) -> tuple[dict[str, Any], str]:
-    """Parse an ATLAS.md file -> (frontmatter, body)."""
+    """Parse an MAP.md file -> (frontmatter, body)."""
     return split_frontmatter(Path(path).read_text(encoding="utf-8"))
 
 
@@ -140,7 +140,7 @@ def validate(fm: dict[str, Any]) -> list[str]:
 
 class _IndentDumper(yaml.SafeDumper):
     """Indent block sequences under their key (`  - x`, not `- x`) to match the
-    authored ATLAS.md style — keeps apply/serialize diffs minimal so the write
+    authored MAP.md style — keeps apply/serialize diffs minimal so the write
     boundary only shows what actually changed."""
 
     def increase_indent(self, flow=False, indentless=False):
@@ -148,7 +148,7 @@ class _IndentDumper(yaml.SafeDumper):
 
 
 def serialize(fm: dict[str, Any], body: str = "") -> str:
-    """Render frontmatter + body back to ATLAS.md text. Used for derive-first
+    """Render frontmatter + body back to MAP.md text. Used for derive-first
     staging (Pass 2) and normalization."""
     dumped = yaml.dump(fm, Dumper=_IndentDumper, sort_keys=False,
                        default_flow_style=False, allow_unicode=True,
@@ -158,7 +158,7 @@ def serialize(fm: dict[str, Any], body: str = "") -> str:
 
 
 def summary(fm: dict[str, Any]) -> dict[str, Any]:
-    """Compact per-project summary for `/atlas view` roll-ups."""
+    """Compact per-project summary for `/cairn view` roll-ups."""
     return {
         "name": fm.get("name", "?"),
         "status": fm.get("status", "?"),

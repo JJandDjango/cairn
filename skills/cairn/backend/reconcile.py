@@ -1,10 +1,10 @@
 """Pass 2 reconciliation: diff graphify's derived graph against the authored
-ATLAS.md and emit confidence-ranked proposals into an editable proposals.md.
+MAP.md and emit confidence-ranked proposals into an editable proposals.md.
 
 The human-gated write boundary (atlas-design.md §2): `reconcile()` and `render()`
 only ever write to graphify-out/proposals.md (derived, regenerable). The single
 write into authored truth is `apply()`, which reads back the checklist the human
-edited and writes the checked proposals into ATLAS.md, re-validating first.
+edited and writes the checked proposals into MAP.md, re-validating first.
 
 Reconciliation runs at file/directory granularity, not node: graphify's
 symbol-level graph (8k+ nodes for this repo, ~61% tests/) is rolled up by
@@ -88,7 +88,7 @@ def _covered(candidate: str, authored: list[str]) -> bool:
 
 def reconcile(atlas_md: str | Path | None, graph_json: str | Path,
               root: str | Path) -> list[Proposal]:
-    """Diff the derived graph against ATLAS.md -> ranked proposals. Pure read;
+    """Diff the derived graph against MAP.md -> ranked proposals. Pure read;
     writes nothing. A missing/None atlas_md means an empty authored model (every
     code dir becomes a proposal) — the derive-first init case."""
     root = Path(root).resolve()
@@ -251,7 +251,7 @@ def parse(proposals_md: str | Path) -> list[dict]:
 
 def apply(atlas_md: str | Path, proposals_md: str | Path) -> dict:
     """The ONLY write into authored truth. Reads the checked proposals and
-    writes them into ATLAS.md; re-validates before writing (no write on error)."""
+    writes them into MAP.md; re-validates before writing (no write on error)."""
     checked = parse(proposals_md)
     fm, body = schema.parse(atlas_md)
     comps = list(fm.get("components") or [])
@@ -285,7 +285,7 @@ def apply(atlas_md: str | Path, proposals_md: str | Path) -> dict:
 
 def stage_draft(graph_json: str | Path, root: str | Path,
                 name: str | None = None) -> str:
-    """Build a full candidate ATLAS.md from the derived graph alone — reconcile
+    """Build a full candidate MAP.md from the derived graph alone — reconcile
     against an empty model (every code dir becomes a component), then wrap with
     identity stubs. Returns the draft text; the caller stages it in graphify-out/
     for the human to curate and `accept`. This is "every proposal pre-checked"
@@ -310,7 +310,7 @@ def stage_draft(graph_json: str | Path, root: str | Path,
 
 
 def accept_draft(draft_md: str | Path, atlas_md: str | Path) -> dict:
-    """Validate a staged draft and write it to ATLAS.md (no write on error).
+    """Validate a staged draft and write it to MAP.md (no write on error).
     The derive-first counterpart to apply() — the gated write into authored
     truth for a freshly-modeled project."""
     fm, body = schema.parse(draft_md)
