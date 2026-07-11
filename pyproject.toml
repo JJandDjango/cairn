@@ -1,0 +1,12 @@
+# Cairn - pytest configuration.
+#
+# Cairn's zero-dependency CORE (skills/cairn/render.py) needs no packaging.
+# The OPTIONAL backend (skills/cairn/backend/, migrated from the orchestrator's
+# atlas engine) is put on the import path here so its test suite can `import
+# backend`. `pythonpath` is resolved relative to this file (the rootdir).
+[tool.pytest.ini_options]
+pythonpath = ["skills/cairn"]
+testpaths = ["tests"]
+markers = [
+    "slow: real-graph regression; skipped when graphify-out/graph.json is absent",
+]
