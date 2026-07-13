@@ -1,9 +1,7 @@
 """Unit tests for backend.contracts — contract renderer.
 
-All tests use synthetic in-memory graph dicts; no real ``graph.json``, no
-graphify subprocess, no live API. A single ``@pytest.mark.slow`` real-graph
-regression test lives at the bottom and is skipped when the graph is
-absent.
+All tests use synthetic in-memory graph dicts or a tmp_path ``graph.json``; no
+graphify subprocess, no live API, no cwd dependency.
 
 Acceptance criteria covered:
   AC-1  empty / missing-key graph → {}

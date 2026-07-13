@@ -160,11 +160,11 @@ def test_from_graph_json_determinism(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Error mode: missing file (missing-graph — non-@slow path raises, not skips)
+# Error mode: missing file (missing-graph — a missing graph.json raises, not a silent {})
 # ---------------------------------------------------------------------------
 
 def test_from_graph_json_missing_file_raises(tmp_path):
-    """missing-graph (non-@slow path): missing JSON file raises an exception, not a silent {}."""
+    """missing-graph: a missing JSON file raises an exception, not a silent {}."""
     missing = tmp_path / "does_not_exist.json"
     assert not missing.exists()
     with pytest.raises(Exception):

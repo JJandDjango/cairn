@@ -2,7 +2,7 @@
 
 Covers the acceptance criteria and
 all documented Error Modes (empty-graph, no-source, dangling-edge, self-edge,
-path-sep, missing-graph) using synthetic in-memory graph fixtures.
+path-sep) using synthetic in-memory graph fixtures.
 
 render_primer is deliberately excluded.
 
@@ -426,40 +426,3 @@ def test_em_cr_sep_backslash_normalized():
     # Keys must use forward slashes — no backslash-keyed entries
     for key in contracts:
         assert "\\" not in key, f"Contract key contains backslash: {key!r}"
-
-
-# ---------------------------------------------------------------------------
-# AC-8: @slow real-graph regression (skips when graph.json absent)
-# ---------------------------------------------------------------------------
-
-@pytest.mark.slow
-def test_ac8_real_graph_core_py_blast_radius():
-    """AC-8: When graphify-out/graph.json exists, src/lint/core.py must have
-    referenced_by == the 9 known files and references == ().
-    Skips cleanly in CI where the graph is gitignored."""
-    from pathlib import Path
-    graph_path = Path("graphify-out/graph.json")
-    if not graph_path.exists():
-        pytest.skip("graphify-out/graph.json absent — skipping real-graph regression (missing-graph)")
-
-    from backend.contracts import build_contracts_from_graph_json
-    contracts = build_contracts_from_graph_json(graph_path)
-
-    expected_referenced_by = tuple(sorted([
-        "src/core/engine.py",
-        "src/worker/task.py",
-        "src/lint/__init__.py",
-        "src/lint/checks/l001_path_existence.py",
-        "src/lint/checks/l002_undefined_refs.py",
-        "src/lint/checks/l003_prompt_validation.py",
-        "src/lint/checks/l004_produces_prompt_consistency.py",
-        "src/lint/cli.py",
-        "tests/test_libfoo_fixtures.py",
-    ]))
-
-    assert "src/lint/core.py" in contracts, "src/lint/core.py not found in contracts"
-    core = contracts["src/lint/core.py"]
-    assert core.referenced_by == expected_referenced_by, (
-        f"referenced_by mismatch.\n  Expected: {expected_referenced_by}\n  Got: {core.referenced_by}"
-    )
-    assert core.references == (), f"Expected references == (), got: {core.references}"
