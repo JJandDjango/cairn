@@ -57,7 +57,7 @@ keys are exactly the five in §3.
 Once the repo is on GitHub:
 
 ```
-/plugin marketplace add <you>/cairn
+/plugin marketplace add JJandDjango/cairn
 /plugin install cairn
 ```
 

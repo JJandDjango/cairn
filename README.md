@@ -46,7 +46,7 @@ Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn   # Windows
 Once this repo is on GitHub, add it as a marketplace and install:
 
 ```
-/plugin marketplace add <you>/cairn
+/plugin marketplace add JJandDjango/cairn
 /plugin install cairn
 ```
 
