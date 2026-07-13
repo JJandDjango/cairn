@@ -22,6 +22,9 @@
   (non-hermetic cwd read, pinned to a pre-standalone fixture project) + its
   orphaned `slow` marker/refs; the file-loading path stays covered hermetically.
   **182 passed, 0 skipped, 0 warnings.**
+- **Errata.** Commits `6af1f09` / `0ebd26c` / `e86f47b` carry an inaccurate
+  `Claude-Session` footer; the correct session and the rationale for leaving
+  history intact are recorded in [[0005-record-commit-footer-errata]].
 
 ## Blockers
 - None.
