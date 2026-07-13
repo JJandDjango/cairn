@@ -27,6 +27,8 @@ where*. Descend into `decisions/` and `docs/` only on demand.
 
 Works on **any** project — a codebase, a novel, a content site, a business, a
 research program. "Component" simply becomes chapter / section / workstream / claim.
+The pace-layered **spine** is what generalizes; the optional graphify backend (a
+derived MAP) is code-only.
 
 ## Install
 

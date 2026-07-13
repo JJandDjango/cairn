@@ -1,7 +1,7 @@
-"""Pass 2 reconciliation: diff graphify's derived graph against the authored
+"""Reconciliation: diff graphify's derived graph against the authored
 MAP.md and emit confidence-ranked proposals into an editable proposals.md.
 
-The human-gated write boundary (atlas-design.md §2): `reconcile()` and `render()`
+The human-gated write boundary: `reconcile()` and `render()`
 only ever write to graphify-out/proposals.md (derived, regenerable). The single
 write into authored truth is `apply()`, which reads back the checklist the human
 edited and writes the checked proposals into MAP.md, re-validating first.
@@ -50,8 +50,8 @@ class Proposal:
 
 def _candidate_dir(source_file: str) -> str | None:
     """Roll a node's source_file up to a candidate component location: the first
-    two path parts — a package subdir ('agentic/l4', 'src/widget'), a loose
-    depth-2 module ('agentic/_clock.py'), or a top-level file ('launch.py').
+    two path parts — a package subdir ('pkg/sub', 'src/widget'), a loose
+    depth-2 module ('pkg/_mod.py'), or a top-level file ('main.py').
     Returns None for ignored (dot-dir / tests) paths. Two-level grouping matches
     how authored components are scoped (a subdir or a module), not per-file, and
     is repo-agnostic — no hardcoded package name."""
@@ -86,13 +86,13 @@ def _covered(candidate: str, authored: list[str]) -> bool:
     return False
 
 
-def reconcile(atlas_md: str | Path | None, graph_json: str | Path,
+def reconcile(map_md: str | Path | None, graph_json: str | Path,
               root: str | Path) -> list[Proposal]:
     """Diff the derived graph against MAP.md -> ranked proposals. Pure read;
-    writes nothing. A missing/None atlas_md means an empty authored model (every
+    writes nothing. A missing/None map_md means an empty authored model (every
     code dir becomes a proposal) — the derive-first init case."""
     root = Path(root).resolve()
-    fm = schema.parse(atlas_md)[0] if atlas_md and Path(atlas_md).exists() else {}
+    fm = schema.parse(map_md)[0] if map_md and Path(map_md).exists() else {}
     authored = _authored_locations(fm)
     graph = gfx.load_graph(graph_json)
 
@@ -249,11 +249,11 @@ def parse(proposals_md: str | Path) -> list[dict]:
     return checked
 
 
-def apply(atlas_md: str | Path, proposals_md: str | Path) -> dict:
+def apply(map_md: str | Path, proposals_md: str | Path) -> dict:
     """The ONLY write into authored truth. Reads the checked proposals and
     writes them into MAP.md; re-validates before writing (no write on error)."""
     checked = parse(proposals_md)
-    fm, body = schema.parse(atlas_md)
+    fm, body = schema.parse(map_md)
     comps = list(fm.get("components") or [])
     added, removed = [], []
     for c in checked:
@@ -277,7 +277,7 @@ def apply(atlas_md: str | Path, proposals_md: str | Path) -> dict:
     errors = schema.validate(fm)
     if errors:
         return {"written": False, "errors": errors, "added": added, "removed": removed}
-    Path(atlas_md).write_text(schema.serialize(fm, body), encoding="utf-8")
+    Path(map_md).write_text(schema.serialize(fm, body), encoding="utf-8")
     return {"written": True, "errors": [], "added": added, "removed": removed}
 
 
@@ -298,7 +298,7 @@ def stage_draft(graph_json: str | Path, root: str | Path,
         comps = [{"name": "main", "role": "EDIT ME.", "level": "module",
                   "location": "."}]
     fm = {
-        "atlas_schema": schema.ATLAS_SCHEMA_VERSION,
+        "cairn_schema": schema.CAIRN_SCHEMA_VERSION,
         "name": name,
         "purpose": "EDIT ME -- one-line purpose.",
         "status": "active",
@@ -309,7 +309,7 @@ def stage_draft(graph_json: str | Path, root: str | Path,
     return schema.serialize(fm, body)
 
 
-def accept_draft(draft_md: str | Path, atlas_md: str | Path) -> dict:
+def accept_draft(draft_md: str | Path, map_md: str | Path) -> dict:
     """Validate a staged draft and write it to MAP.md (no write on error).
     The derive-first counterpart to apply() — the gated write into authored
     truth for a freshly-modeled project."""
@@ -317,5 +317,5 @@ def accept_draft(draft_md: str | Path, atlas_md: str | Path) -> dict:
     errors = schema.validate(fm)
     if errors:
         return {"written": False, "errors": errors}
-    Path(atlas_md).write_text(schema.serialize(fm, body), encoding="utf-8")
+    Path(map_md).write_text(schema.serialize(fm, body), encoding="utf-8")
     return {"written": True, "errors": []}

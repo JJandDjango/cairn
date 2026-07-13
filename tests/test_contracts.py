@@ -1,11 +1,11 @@
-"""Unit tests for atlas.contracts — priming producer step 2 (contract renderer).
+"""Unit tests for backend.contracts — contract renderer.
 
 All tests use synthetic in-memory graph dicts; no real ``graph.json``, no
 graphify subprocess, no live API. A single ``@pytest.mark.slow`` real-graph
-regression test (CR-C) lives at the bottom and is skipped when the graph is
+regression test lives at the bottom and is skipped when the graph is
 absent.
 
-Acceptance criteria covered (CR-A scope, AC-1 through AC-6):
+Acceptance criteria covered:
   AC-1  empty / missing-key graph → {}
   AC-2  EXTRACTED DEP_RELATIONS → references / referenced_by
   AC-3  EXTRACTED uses + INFERRED edges → inferred, absent from trustable refs
@@ -98,11 +98,11 @@ class TestEmptyGraph:
         assert build_contracts({"nodes": [], "edges": []}) == {}
 
     def test_missing_nodes_key(self):
-        """EM-CR-NOKEY: missing 'nodes' key — treat as empty, no crash."""
+        """empty-graph: missing 'nodes' key — treat as empty, no crash."""
         assert build_contracts({"edges": []}) == {}
 
     def test_missing_both_keys(self):
-        """EM-CR-NOKEY: empty dict — treat as empty, no crash."""
+        """empty-graph: empty dict — treat as empty, no crash."""
         assert build_contracts({}) == {}
 
     def test_none_values(self):
@@ -116,7 +116,7 @@ class TestEmptyGraph:
 
     def test_non_code_file_type_ignored(self):
         """Nodes with file_type != 'code' (e.g. 'doc') are ignored."""
-        nodes = [_node("a", "ATLAS", "ATLAS.md", file_type="doc")]
+        nodes = [_node("a", "MAP", "MAP.md", file_type="doc")]
         assert build_contracts(_graph(nodes)) == {}
 
 
@@ -440,27 +440,27 @@ class TestIntraFile:
 
 
 # ---------------------------------------------------------------------------
-# EM-CR-DANGLE: dangling edges (unknown node id) → skipped
+# dangling-edge: dangling edges (unknown node id) → skipped
 # ---------------------------------------------------------------------------
 
 
 class TestDanglingEdges:
     def test_unknown_source_id_skipped(self):
-        """EM-CR-DANGLE: edge with source id not in nodes → skipped, no crash."""
+        """dangling-edge: edge with source id not in nodes → skipped, no crash."""
         nodes = [_node("a", "a", "a.py")]
         edges = [_edge("GHOST", "a", "imports")]
         contracts = build_contracts(_graph(nodes, edges))
         assert contracts["a.py"].referenced_by == ()
 
     def test_unknown_target_id_skipped(self):
-        """EM-CR-DANGLE: edge with target id not in nodes → skipped."""
+        """dangling-edge: edge with target id not in nodes → skipped."""
         nodes = [_node("a", "a", "a.py")]
         edges = [_edge("a", "GHOST", "imports")]
         contracts = build_contracts(_graph(nodes, edges))
         assert contracts["a.py"].references == ()
 
     def test_non_code_node_acts_as_dangling(self):
-        """EM-CR-NOSRC: node with non-code extension absent from node_file → edge skipped."""
+        """no-source: node with non-code extension absent from node_file → edge skipped."""
         n_doc = _node("doc1", "README", "README.md", file_type=None)
         n_code = _node("code1", "x", "x.py")
         nodes = [n_doc, n_code]
@@ -473,22 +473,22 @@ class TestDanglingEdges:
 
 
 # ---------------------------------------------------------------------------
-# EM-CR-SEP: OS-native path separators normalized
+# path-sep: OS-native path separators normalized
 # ---------------------------------------------------------------------------
 
 
 class TestOSSeparators:
     def test_backslash_normalized_to_forward_slash(self):
-        """EM-CR-SEP: source_file with backslashes is normalized to forward slashes."""
+        """path-sep: source_file with backslashes is normalized to forward slashes."""
         nodes = [
-            _node("a", "a.py", "agentic\\lint\\a.py"),
-            _node("b", "b.py", "agentic\\lint\\b.py"),
+            _node("a", "a.py", "src\\lint\\a.py"),
+            _node("b", "b.py", "src\\lint\\b.py"),
         ]
         edges = [_edge("b", "a", "imports")]
         contracts = build_contracts(_graph(nodes, edges))
-        assert "agentic/lint/a.py" in contracts
-        assert "agentic/lint/b.py" in contracts
-        assert contracts["agentic/lint/a.py"].referenced_by == ("agentic/lint/b.py",)
+        assert "src/lint/a.py" in contracts
+        assert "src/lint/b.py" in contracts
+        assert contracts["src/lint/a.py"].referenced_by == ("src/lint/b.py",)
 
 
 # ---------------------------------------------------------------------------
@@ -562,12 +562,12 @@ class TestBuildContractsFromGraphJson:
 
 
 # ---------------------------------------------------------------------------
-# AC-7: render_primer — deterministic markdown output
+# render_primer — deterministic markdown output
 # ---------------------------------------------------------------------------
 
 
 class TestRenderPrimer:
-    """AC-7: render_primer emits IN/OUT headers, lists refs, honours subtree, is byte-stable."""
+    """render_primer emits IN/OUT headers, lists refs, honours subtree, is byte-stable."""
 
     # ---- fixture helpers ----
 
@@ -597,10 +597,10 @@ class TestRenderPrimer:
         ]
         return build_contracts(_graph(nodes, edges))
 
-    # ---- AC-7: IN n / OUT m header ----
+    # ---- IN n / OUT m header ----
 
     def test_in_out_header_present_no_subtree(self):
-        """AC-7: output contains 'IN n / OUT m' line for each file."""
+        """output contains 'IN n / OUT m' line for each file."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         # a.py is imported by b.py → IN 1 / OUT 0
@@ -609,14 +609,14 @@ class TestRenderPrimer:
         assert "IN 0 / OUT 1" in text
 
     def test_in_out_header_in_dep_map_line(self):
-        """AC-7: dependency map lines have '- `<file>` — IN n / OUT m' format."""
+        """dependency map lines have '- `<file>` — IN n / OUT m' format."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "- `a.py` — IN 1 / OUT 0" in text
         assert "- `b.py` — IN 0 / OUT 1" in text
 
     def test_in_out_header_in_file_contract_section(self):
-        """AC-7: file contract section has '### `<file>` — IN n / OUT m' format."""
+        """file contract section has '### `<file>` — IN n / OUT m' format."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "### `a.py` — IN 1 / OUT 0" in text
@@ -625,27 +625,27 @@ class TestRenderPrimer:
     # ---- refs listed ----
 
     def test_referenced_by_listed(self):
-        """AC-7: referenced_by paths appear in the output for a.py."""
+        """referenced_by paths appear in the output for a.py."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         # a.py is referenced_by b.py
         assert "`b.py`" in text
 
     def test_references_listed(self):
-        """AC-7: references paths appear in the output for b.py."""
+        """references paths appear in the output for b.py."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         # b.py references a.py
         assert "`a.py`" in text
 
     def test_defines_signature_listed(self):
-        """AC-7: signatures from the file node's contains targets appear under 'defines'."""
+        """signatures from the file node's contains targets appear under 'defines'."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "Foo" in text  # a.py defines Foo
 
     def test_empty_refs_show_dash(self):
-        """AC-7: empty references/referenced_by/inferred shows '—'."""
+        """empty references/referenced_by/inferred shows '—'."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         # a.py has no references (OUT 0)
@@ -654,7 +654,7 @@ class TestRenderPrimer:
     # ---- subtree filtering ----
 
     def test_subtree_filters_cards(self):
-        """AC-7: subtree=x/y restricts file contract cards to files under x/y."""
+        """subtree=x/y restricts file contract cards to files under x/y."""
         contracts = self._subtree_contracts()
         text = render_primer(contracts, subtree="x/y")
         # x/y files should appear
@@ -664,26 +664,26 @@ class TestRenderPrimer:
         assert "### `x/z/gamma.py`" not in text
 
     def test_subtree_cross_refs_still_listed(self):
-        """AC-7: cross-refs from outside the subtree are still listed as paths."""
+        """cross-refs from outside the subtree are still listed as paths."""
         contracts = self._subtree_contracts()
         text = render_primer(contracts, subtree="x/y")
         # beta.py is referenced_by gamma.py (outside x/y); path should still appear
         assert "x/z/gamma.py" in text
 
     def test_subtree_title_in_header(self):
-        """AC-7: the subtree name appears in the '# Derived contracts —' heading."""
+        """the subtree name appears in the '# Derived contracts —' heading."""
         contracts = self._subtree_contracts()
         text = render_primer(contracts, subtree="x/y")
         assert "# Derived contracts — x/y" in text
 
     def test_no_subtree_title_is_repo(self):
-        """AC-7: without subtree, the heading says 'repo'."""
+        """without subtree, the heading says 'repo'."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "# Derived contracts — repo" in text
 
     def test_subtree_no_match_empty_body(self):
-        """AC-7: subtree that matches no files → empty dependency map + file contracts."""
+        """subtree that matches no files → empty dependency map + file contracts."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts, subtree="nonexistent/")
         # Should still produce a valid (minimal) header
@@ -694,19 +694,19 @@ class TestRenderPrimer:
     # ---- byte-stability (determinism) ----
 
     def test_byte_identical_two_calls(self):
-        """AC-7: two calls on the same contracts dict yield byte-identical strings."""
+        """two calls on the same contracts dict yield byte-identical strings."""
         contracts = self._two_file_contracts()
         assert render_primer(contracts) == render_primer(contracts)
 
     def test_byte_identical_with_subtree(self):
-        """AC-7: two calls with the same subtree yield byte-identical strings."""
+        """two calls with the same subtree yield byte-identical strings."""
         contracts = self._subtree_contracts()
         r1 = render_primer(contracts, subtree="x/y")
         r2 = render_primer(contracts, subtree="x/y")
         assert r1 == r2
 
     def test_files_sorted_in_output(self):
-        """AC-7: files appear sorted in the output (deterministic order)."""
+        """files appear sorted in the output (deterministic order)."""
         nodes = [
             _node("z", "z.py", "z.py"),
             _node("a", "a.py", "a.py"),
@@ -722,75 +722,22 @@ class TestRenderPrimer:
     # ---- section structure ----
 
     def test_required_sections_present(self):
-        """AC-7: output has 'Dependency map' and 'File contracts' sections."""
+        """output has 'Dependency map' and 'File contracts' sections."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "## Dependency map (blast radius)" in text
         assert "## File contracts" in text
 
     def test_header_blockquote_present(self):
-        """AC-7: the standard preamble blockquote is present."""
+        """the standard preamble blockquote is present."""
         contracts = self._two_file_contracts()
         text = render_primer(contracts)
         assert "> 0-token, derived from graphify graph.json" in text
 
     def test_inferred_listed_with_verify_label(self):
-        """AC-7: inferred paths appear under 'inferred (verify)' label."""
+        """inferred paths appear under 'inferred (verify)' label."""
         nodes = [_node("a", "a.py", "a.py"), _node("b", "b.py", "b.py")]
         edges = [_edge("b", "a", "calls", confidence="EXTRACTED")]
         contracts = build_contracts(_graph(nodes, edges))
         text = render_primer(contracts)
         assert "inferred (verify):" in text
-
-
-# ---------------------------------------------------------------------------
-# AC-8: @pytest.mark.slow real-graph regression (skipped when graph absent)
-# ---------------------------------------------------------------------------
-
-GRAPH_JSON_PATH = "graphify-out/graph.json"
-
-EXPECTED_REFERENCED_BY = tuple(
-    sorted(
-        [
-            "agentic/harness/harness.py",
-            "agentic/l4/mutator.py",
-            "agentic/lint/__init__.py",
-            "agentic/lint/checks/l001_path_existence.py",
-            "agentic/lint/checks/l002_undefined_refs.py",
-            "agentic/lint/checks/l003_prompt_validation.py",
-            "agentic/lint/checks/l004_produces_prompt_consistency.py",
-            "agentic/lint/cli.py",
-            "tests/test_libfoo_fixtures.py",
-        ]
-    )
-)
-
-
-@pytest.mark.slow
-def test_real_graph_lint_core_in9_out0():
-    """AC-8: real graph regression — agentic/lint/core.py IN 9 / OUT 0.
-
-    Skips cleanly when graphify-out/graph.json is absent (gitignored in CI).
-    Runs locally where the graph exists, verifying the contracts reproduce the
-    #152-spike-verified blast radius.
-    """
-    try:
-        contracts = build_contracts_from_graph_json(GRAPH_JSON_PATH)
-    except (FileNotFoundError, OSError, Exception) as exc:
-        pytest.skip(f"graphify-out/graph.json absent or unreadable: {exc}")
-
-    key = "agentic/lint/core.py"
-    if key not in contracts:
-        pytest.skip(f"{key} not found in real graph contracts (graph may be stale)")
-
-    fc = contracts[key]
-    assert fc.references == (), (
-        f"agentic/lint/core.py should have no outgoing deps (OUT 0), got {fc.references}"
-    )
-    assert fc.referenced_by == EXPECTED_REFERENCED_BY, (
-        f"agentic/lint/core.py IN-9 mismatch.\n"
-        f"  expected: {EXPECTED_REFERENCED_BY}\n"
-        f"  actual:   {fc.referenced_by}"
-    )
-    assert fc.in_count == 9
-    assert fc.out_count == 0

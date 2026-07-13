@@ -79,20 +79,19 @@ NONCODE_DIAGRAM_NOTE = (
 
 def _structured_map_stub(project_name: str, purpose: str) -> str:
     """OPTIONAL structured-model stub prepended to MAP.md for graphify-backend code
-    projects (Slice 2, Decision C). A commented block mirroring backend/schema.py so
-    the schema is discoverable without forcing frontmatter onto a fresh MAP: a
-    hand-author uncomments and fills it, or `/cairn derive` generates it from the
-    code graph. Returns "" for every non-backend project -> that MAP renders
-    unchanged. Values are interpolated here (not via {{ }}) so the single-pass
-    substitutor never rescans this block. `atlas_schema` is the schema version key
-    (backend/schema.py), not the retired backend name."""
+    projects. A commented block mirroring backend/schema.py so the schema is
+    discoverable without forcing frontmatter onto a fresh MAP: a hand-author
+    uncomments and fills it, or `/cairn derive` generates it from the code graph.
+    Returns "" for every non-backend project -> that MAP renders unchanged. Values
+    are interpolated here (not via {{ }}) so the single-pass substitutor never
+    rescans this block. `cairn_schema` is the schema version key (backend/schema.py)."""
     return (
         "<!-- OPTIONAL structured model - graphify-backend projects only.\n"
         "     Uncomment the YAML and fill it, or run `/cairn derive` to generate it\n"
         "     from the code graph (then `/cairn reconcile` to keep authored vs\n"
         "     derived honest). Schema + validation: backend/schema.py.\n"
         "\n"
-        "atlas_schema: 1\n"
+        "cairn_schema: 1\n"
         f"name: {project_name}\n"
         f"purpose: {purpose}\n"
         "status: active            # greenfield | active | maintenance | archived\n"

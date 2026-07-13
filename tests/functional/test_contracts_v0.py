@@ -1,13 +1,13 @@
-"""Functional acceptance tests for priming_contract_renderer_v0 — CR-A only.
+"""Functional acceptance tests for the contract renderer.
 
-Covers all Acceptance Criteria delivered by CR-A (AC-1 through AC-6, AC-8) and
-all documented Error Modes (EM-CR-NOKEY, EM-CR-NOSRC, EM-CR-DANGLE, EM-CR-SELF,
-EM-CR-SEP, EM-CR-NOGRAPH) using synthetic in-memory graph fixtures.
+Covers the acceptance criteria and
+all documented Error Modes (empty-graph, no-source, dangling-edge, self-edge,
+path-sep, missing-graph) using synthetic in-memory graph fixtures.
 
-AC-7 (render_primer) is CR-B scope — deliberately excluded.
+render_primer is deliberately excluded.
 
-Constraints: no real graph.json required, no live API calls, no agentic/ internals.
-QA-owned — tests public contract at atlas.contracts only.
+Constraints: no real graph.json required, no live API calls, no src/ internals.
+tests public contract at backend.contracts only.
 """
 
 from __future__ import annotations
@@ -323,11 +323,11 @@ def test_ac5_determinism_two_calls_equal():
 
 
 # ---------------------------------------------------------------------------
-# AC-6 / EM-CR-SELF: intra-file edges produce no self-reference
+# AC-6 / self-edge: intra-file edges produce no self-reference
 # ---------------------------------------------------------------------------
 
 def test_ac6_intrafile_edge_no_self_reference():
-    """AC-6 / EM-CR-SELF: edge where source_file == target_file must be skipped."""
+    """AC-6 / self-edge: edge where source_file == target_file must be skipped."""
     n_file = _make_node("mod", "mod.py", "mod.py")
     n_sym = _make_node("mod_sym", "MyClass", "mod.py")
     g = _graph(
@@ -349,19 +349,19 @@ def test_ac6_intrafile_edge_no_self_reference():
 # ---------------------------------------------------------------------------
 
 def test_em_cr_nokey_empty_dict():
-    """EM-CR-NOKEY: {} missing 'nodes'/'edges' -> {} contracts, no crash."""
+    """empty-graph: {} missing 'nodes'/'edges' -> {} contracts, no crash."""
     result = build_contracts({})
     assert result == {}
 
 
 def test_em_cr_nokey_partial_keys_no_crash():
-    """EM-CR-NOKEY: only 'nodes' present, no 'edges' -> no crash, dict returned."""
+    """empty-graph: only 'nodes' present, no 'edges' -> no crash, dict returned."""
     result = build_contracts({"nodes": [_make_node("a", "a.py", "a.py")]})
     assert isinstance(result, dict)
 
 
 def test_em_cr_nosrc_node_without_source_file():
-    """EM-CR-NOSRC: node without source_file is ignored (no crash)."""
+    """no-source: node without source_file is ignored (no crash)."""
     n_nosrc = {"id": "ghost", "label": "ghost.py", "file_type": "code"}
     n_real = _make_node("real", "real.py", "real.py")
     g = _graph(n_nosrc, n_real)
@@ -372,7 +372,7 @@ def test_em_cr_nosrc_node_without_source_file():
 
 
 def test_em_cr_nosrc_non_code_file_type_ignored():
-    """EM-CR-NOSRC: nodes with file_type != 'code' are ignored."""
+    """no-source: nodes with file_type != 'code' are ignored."""
     n_doc = {
         "id": "doc",
         "label": "README.md",
@@ -387,7 +387,7 @@ def test_em_cr_nosrc_non_code_file_type_ignored():
 
 
 def test_em_cr_dangle_edge_to_unknown_target():
-    """EM-CR-DANGLE: edge referencing unknown target node id is skipped (no crash)."""
+    """dangling-edge: edge referencing unknown target node id is skipped (no crash)."""
     n_a = _make_node("a", "a.py", "a.py")
     g = _graph(n_a, edges=[_make_edge("a", "nonexistent_id", "imports")])
     result = build_contracts(g)
@@ -395,7 +395,7 @@ def test_em_cr_dangle_edge_to_unknown_target():
 
 
 def test_em_cr_dangle_edge_from_unknown_source():
-    """EM-CR-DANGLE: edge whose source node id is unknown is skipped (no crash)."""
+    """dangling-edge: edge whose source node id is unknown is skipped (no crash)."""
     n_a = _make_node("a", "a.py", "a.py")
     g = _graph(n_a, edges=[_make_edge("ghost_id", "a", "imports")])
     result = build_contracts(g)
@@ -403,7 +403,7 @@ def test_em_cr_dangle_edge_from_unknown_source():
 
 
 def test_em_cr_self_intrafile_no_self_in_inferred():
-    """EM-CR-SELF: an intra-file edge must not produce a self-entry in inferred."""
+    """self-edge: an intra-file edge must not produce a self-entry in inferred."""
     n_file = _make_node("f", "f.py", "f.py")
     n_sym = _make_node("f_sym", "Foo", "f.py")
     g = _graph(n_file, n_sym, edges=[_make_edge("f", "f_sym", "calls")])
@@ -416,7 +416,7 @@ def test_em_cr_self_intrafile_no_self_in_inferred():
 
 
 def test_em_cr_sep_backslash_normalized():
-    """EM-CR-SEP: backslash OS separators in source_file are normalized to forward slash."""
+    """path-sep: backslash OS separators in source_file are normalized to forward slash."""
     n_a = {"id": "a", "label": "a.py", "file_type": "code",
            "source_file": "pkg\\sub\\a.py", "source_location": "L1"}
     n_b = {"id": "b", "label": "b.py", "file_type": "code",
@@ -434,31 +434,31 @@ def test_em_cr_sep_backslash_normalized():
 
 @pytest.mark.slow
 def test_ac8_real_graph_core_py_blast_radius():
-    """AC-8: When graphify-out/graph.json exists, agentic/lint/core.py must have
+    """AC-8: When graphify-out/graph.json exists, src/lint/core.py must have
     referenced_by == the 9 known files and references == ().
     Skips cleanly in CI where the graph is gitignored."""
     from pathlib import Path
     graph_path = Path("graphify-out/graph.json")
     if not graph_path.exists():
-        pytest.skip("graphify-out/graph.json absent — skipping real-graph regression (EM-CR-NOGRAPH)")
+        pytest.skip("graphify-out/graph.json absent — skipping real-graph regression (missing-graph)")
 
     from backend.contracts import build_contracts_from_graph_json
     contracts = build_contracts_from_graph_json(graph_path)
 
     expected_referenced_by = tuple(sorted([
-        "agentic/harness/harness.py",
-        "agentic/l4/mutator.py",
-        "agentic/lint/__init__.py",
-        "agentic/lint/checks/l001_path_existence.py",
-        "agentic/lint/checks/l002_undefined_refs.py",
-        "agentic/lint/checks/l003_prompt_validation.py",
-        "agentic/lint/checks/l004_produces_prompt_consistency.py",
-        "agentic/lint/cli.py",
+        "src/core/engine.py",
+        "src/worker/task.py",
+        "src/lint/__init__.py",
+        "src/lint/checks/l001_path_existence.py",
+        "src/lint/checks/l002_undefined_refs.py",
+        "src/lint/checks/l003_prompt_validation.py",
+        "src/lint/checks/l004_produces_prompt_consistency.py",
+        "src/lint/cli.py",
         "tests/test_libfoo_fixtures.py",
     ]))
 
-    assert "agentic/lint/core.py" in contracts, "agentic/lint/core.py not found in contracts"
-    core = contracts["agentic/lint/core.py"]
+    assert "src/lint/core.py" in contracts, "src/lint/core.py not found in contracts"
+    core = contracts["src/lint/core.py"]
     assert core.referenced_by == expected_referenced_by, (
         f"referenced_by mismatch.\n  Expected: {expected_referenced_by}\n  Got: {core.referenced_by}"
     )

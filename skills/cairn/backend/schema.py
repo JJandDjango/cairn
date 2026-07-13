@@ -1,10 +1,10 @@
 """MAP authored-model schema: parse, validate, serialize MAP.md frontmatter.
 
 The frontmatter (YAML between `---` fences) is the machine-readable contract for
-the *authored* model (MAP.md section 4). The derived graph in `graphify-out/`
-is a separate artifact (section 6), never merged here except by human acceptance
-(section 2). Keys are snake_case (Dataview-safe); component/flow *names* are
-kebab-case values. Frontmatter is versioned (`atlas_schema`) for migration.
+the *authored* model. The derived graph in `graphify-out/` is a separate
+artifact, never merged here except by human acceptance. Keys are snake_case
+(Dataview-safe); component/flow *names* are kebab-case values. Frontmatter is
+versioned (`cairn_schema`) for migration.
 """
 from __future__ import annotations
 
@@ -13,40 +13,36 @@ from typing import Any
 
 import yaml
 
-ATLAS_SCHEMA_VERSION = 1
+CAIRN_SCHEMA_VERSION = 1
 
 STATUS_VALUES = {"greenfield", "active", "maintenance", "archived"}
 LEVEL_VALUES = {"system", "module", "implementation"}
-# Optional per-component primitive tag (PRIMITIVES.md §6): which of the four
-# managed inputs the component serves; `runtime` marks Tier-B callers of
-# inference (§2). Omitted = cross-cutting / utility — deliberately unclassified.
-PRIMITIVE_VALUES = {"model", "prompts", "context", "tools", "runtime"}
 
 
-class AtlasParseError(Exception):
+class MapParseError(Exception):
     """Raised when MAP.md cannot be split into frontmatter + body."""
 
 
 def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
-    """Split an MAP.md document into (frontmatter dict, body markdown).
+    """Split a MAP.md document into (frontmatter dict, body markdown).
 
     Expects a leading YAML block delimited by lines that are exactly `---`.
     """
     if not text.startswith("---"):
-        raise AtlasParseError("MAP.md must begin with a '---' frontmatter fence")
+        raise MapParseError("MAP.md must begin with a '---' frontmatter fence")
     lines = text.splitlines()
     end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
     if end is None:
-        raise AtlasParseError("unterminated frontmatter: no closing '---'")
+        raise MapParseError("unterminated frontmatter: no closing '---'")
     data = yaml.safe_load("\n".join(lines[1:end])) or {}
     if not isinstance(data, dict):
-        raise AtlasParseError("frontmatter is not a YAML mapping")
+        raise MapParseError("frontmatter is not a YAML mapping")
     body = "\n".join(lines[end + 1:]).lstrip("\n")
     return data, body
 
 
 def parse(path: str | Path) -> tuple[dict[str, Any], str]:
-    """Parse an MAP.md file -> (frontmatter, body)."""
+    """Parse a MAP.md file -> (frontmatter, body)."""
     return split_frontmatter(Path(path).read_text(encoding="utf-8"))
 
 
@@ -59,8 +55,8 @@ def validate(fm: dict[str, Any]) -> list[str]:
         if not cond:
             errors.append(msg)
 
-    req(fm.get("atlas_schema") == ATLAS_SCHEMA_VERSION,
-        f"atlas_schema must be {ATLAS_SCHEMA_VERSION} (got {fm.get('atlas_schema')!r})")
+    req(fm.get("cairn_schema") == CAIRN_SCHEMA_VERSION,
+        f"cairn_schema must be {CAIRN_SCHEMA_VERSION} (got {fm.get('cairn_schema')!r})")
 
     # Identity
     req(bool(fm.get("name")), "identity: 'name' is required")
@@ -85,11 +81,6 @@ def validate(fm: dict[str, Any]) -> list[str]:
         lvl = c.get("level", "module")
         req(lvl in LEVEL_VALUES,
             f"{where}: 'level' must be one of {sorted(LEVEL_VALUES)} (got {lvl!r})")
-        prim = c.get("primitive")
-        if prim is not None:
-            req(prim in PRIMITIVE_VALUES,
-                f"{where}: 'primitive' must be one of {sorted(PRIMITIVE_VALUES)} "
-                f"(got {prim!r})")
         if c.get("name"):
             comp_names.add(c["name"])
 
@@ -149,7 +140,7 @@ class _IndentDumper(yaml.SafeDumper):
 
 def serialize(fm: dict[str, Any], body: str = "") -> str:
     """Render frontmatter + body back to MAP.md text. Used for derive-first
-    staging (Pass 2) and normalization."""
+    staging and normalization."""
     dumped = yaml.dump(fm, Dumper=_IndentDumper, sort_keys=False,
                        default_flow_style=False, allow_unicode=True,
                        width=4096).rstrip("\n")

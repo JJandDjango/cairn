@@ -32,8 +32,8 @@ def test_refresh_alias_still_works():
 
 
 def test_file_override_on_reconcile():
-    args = build_parser().parse_args(["reconcile", "somedir", "--file", "ATLAS.md"])
-    assert args.file == "ATLAS.md"
+    args = build_parser().parse_args(["reconcile", "somedir", "--file", "MAP.md"])
+    assert args.file == "MAP.md"
 
 
 def test_stage_defaults_to_map_and_dispatches():

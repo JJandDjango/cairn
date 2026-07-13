@@ -3,8 +3,8 @@
 
 Each project's authored ``MAP.md`` is symlinked into the vault as ``<name>.md``
 so ``[[name]]`` resolves in Obsidian's graph view. A generated ``index.md`` is
-the portfolio dashboard. Symlinks need Windows Developer Mode (a Pass 1
-prerequisite); we fall back to a copy + marker if symlinks are unavailable.
+the portfolio dashboard. Symlinks need Windows Developer Mode; we fall back to a
+copy + marker if symlinks are unavailable.
 """
 from __future__ import annotations
 
@@ -29,28 +29,28 @@ def ensure_vault() -> Path:
     return VAULT
 
 
-def add_project(atlas_md: str | Path) -> Path:
+def add_project(map_md: str | Path) -> Path:
     """Link a project's MAP.md into the vault as ``<name>.md`` (name from
     frontmatter), then regenerate ``index.md``. Falls back to a copy if symlinks
     are unavailable. Returns the vault entry path."""
-    atlas_md = Path(atlas_md).resolve()
-    fm, _ = schema.parse(atlas_md)
+    map_md = Path(map_md).resolve()
+    fm, _ = schema.parse(map_md)
     name = fm.get("name")
     if not name:
-        raise ValueError(f"{atlas_md} has no 'name' in frontmatter")
+        raise ValueError(f"{map_md} has no 'name' in frontmatter")
     ensure_vault()
     link = VAULT / f"{name}.md"
     if link.exists() or link.is_symlink():
         link.unlink()
     copy_marker = VAULT / f".{name}.copy"
     try:
-        os.symlink(atlas_md, link)
+        os.symlink(map_md, link)
         if copy_marker.exists():
             copy_marker.unlink()
     except (OSError, NotImplementedError):
         # Windows without Developer Mode / insufficient privilege: copy + mark.
-        link.write_text(atlas_md.read_text(encoding="utf-8"), encoding="utf-8")
-        copy_marker.write_text(str(atlas_md), encoding="utf-8")
+        link.write_text(map_md.read_text(encoding="utf-8"), encoding="utf-8")
+        copy_marker.write_text(str(map_md), encoding="utf-8")
     write_index()
     return link
 

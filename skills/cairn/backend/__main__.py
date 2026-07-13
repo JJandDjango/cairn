@@ -14,8 +14,8 @@ file defaults to MAP.md — Cairn's structured MAP stratum (backend/schema.py) �
 is overridable with --file. `reconcile` derives, diffs the graph against MAP.md at
 file/dir granularity, and writes confidence-ranked proposals to an editable
 graphify-out/proposals.md; `--apply` writes the checked items into MAP.md (the only
-write into authored truth). Migrated from the orchestrator's atlas engine; all
-graphify contact stays isolated to graphify_adapter.py.
+write into authored truth). All graphify contact stays isolated to
+graphify_adapter.py.
 """
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from . import graphify_adapter as gfx
 from . import reconcile, schema, vault
 
 # Cairn's authored-truth stratum the backend reads/writes; --file overrides it on
-# `reconcile` / `stage` (Slice 2, Decision A — retargeted from ATLAS.md).
+# `reconcile` / `stage`.
 AUTHORED_DOC = "MAP.md"
 
 

@@ -3,10 +3,9 @@
 graphify is an external CLI whose output is not guaranteed ASCII; on Windows the
 locale codec (cp1252, strict) crashes on bytes undefined there (e.g. 0x90, a
 UTF-8 continuation byte). These tests lock the encoding="utf-8", errors="replace"
-decode policy so a refactor can't silently regress to text=True alone. (#133
-cp1252 audit; mirrors the harness-wide policy in cli_runner.py.)
+decode policy so a refactor can't silently regress to text=True alone.
 
-This is the first test coverage of atlas/graphify_adapter.py. The decode itself
+This is the first test coverage of backend/graphify_adapter.py. The decode itself
 happens inside subprocess, so the proportionate guard is a contract assertion on
 the kwargs (a real non-cp1252 graphify run isn't reproducible without the tool).
 """

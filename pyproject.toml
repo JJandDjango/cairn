@@ -1,9 +1,12 @@
 # Cairn - pytest configuration.
 #
 # Cairn's zero-dependency CORE (skills/cairn/render.py) needs no packaging.
-# The OPTIONAL backend (skills/cairn/backend/, migrated from the orchestrator's
-# atlas engine) is put on the import path here so its test suite can `import
-# backend`. `pythonpath` is resolved relative to this file (the rootdir).
+# The OPTIONAL backend (skills/cairn/backend/) is put on the import path here so
+# its test suite can `import backend`. `pythonpath` is resolved relative to this
+# file (the rootdir).
+#
+# Version + plugin manifest: `.claude-plugin/plugin.json` is the single source of
+# truth. This file is pytest config only - NOT a package manifest (no [project]).
 [tool.pytest.ini_options]
 pythonpath = ["skills/cairn"]
 testpaths = ["tests"]

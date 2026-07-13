@@ -1,8 +1,8 @@
-"""Pass 1 skeleton tests for the `atlas` package (schema + vault)."""
+"""Tests for the backend schema + vault."""
 from backend import schema, vault
 
 SAMPLE = """---
-atlas_schema: 1
+cairn_schema: 1
 name: demo
 purpose: A demo project
 status: active
@@ -50,35 +50,6 @@ def test_validate_missing_required():
     assert any("status" in e for e in errors)
 
 
-def test_validate_primitive_tag():
-    fm, _ = schema.split_frontmatter(SAMPLE)
-    fm["components"][0]["primitive"] = "tools"
-    assert schema.validate(fm) == []
-    for value in schema.PRIMITIVE_VALUES:
-        fm["components"][0]["primitive"] = value
-        assert schema.validate(fm) == []
-
-
-def test_validate_primitive_tag_invalid():
-    fm, _ = schema.split_frontmatter(SAMPLE)
-    fm["components"][0]["primitive"] = "tols"
-    assert any("primitive" in e for e in schema.validate(fm))
-
-
-def test_validate_primitive_tag_optional():
-    fm, _ = schema.split_frontmatter(SAMPLE)
-    assert "primitive" not in fm["components"][0]
-    assert schema.validate(fm) == []
-
-
-def test_primitive_tag_round_trip():
-    fm, body = schema.split_frontmatter(SAMPLE)
-    fm["components"][0]["primitive"] = "runtime"
-    fm2, _ = schema.split_frontmatter(schema.serialize(fm, body))
-    assert fm2["components"][0]["primitive"] == "runtime"
-    assert schema.validate(fm2) == []
-
-
 def test_validate_dangling_flow_reference():
     fm, _ = schema.split_frontmatter(SAMPLE)
     fm["flows"][0]["entry"] = "ghost"
@@ -87,8 +58,8 @@ def test_validate_dangling_flow_reference():
 
 def test_validate_wrong_schema_version():
     fm, _ = schema.split_frontmatter(SAMPLE)
-    fm["atlas_schema"] = 99
-    assert any("atlas_schema" in e for e in schema.validate(fm))
+    fm["cairn_schema"] = 99
+    assert any("cairn_schema" in e for e in schema.validate(fm))
 
 
 def test_round_trip():
@@ -106,24 +77,24 @@ def test_summary():
 
 
 def test_vault_add_and_index(tmp_path, monkeypatch):
-    monkeypatch.setattr(vault, "VAULT", tmp_path / "atlas")
+    monkeypatch.setattr(vault, "VAULT", tmp_path / "cairn")
     proj = tmp_path / "proj"
     proj.mkdir()
-    (proj / "ATLAS.md").write_text(SAMPLE, encoding="utf-8")
+    (proj / "MAP.md").write_text(SAMPLE, encoding="utf-8")
 
-    link = vault.add_project(proj / "ATLAS.md")
+    link = vault.add_project(proj / "MAP.md")
     assert link.exists()
     assert any(p["name"] == "demo" for p in vault.list_projects())
 
-    index = (tmp_path / "atlas" / "index.md").read_text(encoding="utf-8")
+    index = (tmp_path / "cairn" / "index.md").read_text(encoding="utf-8")
     assert "[[demo]]" in index
     assert "| demo |" not in index  # name is wiki-linked, not bare
 
 
 def test_validate_cli_singular_counts(tmp_path, capsys):
     from backend.__main__ import main
-    atlas_md = tmp_path / "ATLAS.md"
-    atlas_md.write_text(SAMPLE, encoding="utf-8")
-    assert main(["validate", str(atlas_md)]) == 0
+    map_md = tmp_path / "MAP.md"
+    map_md.write_text(SAMPLE, encoding="utf-8")
+    assert main(["validate", str(map_md)]) == 0
     out = capsys.readouterr().out
-    assert "(1 component, 1 flow)" in out  # singular — no "1 flows" (#123 nit)
+    assert "(1 component, 1 flow)" in out  # singular — no "1 flows"

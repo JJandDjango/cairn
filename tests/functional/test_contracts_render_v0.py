@@ -1,13 +1,13 @@
-"""Functional acceptance tests for priming_contract_renderer_v0 — CR-B (render_primer).
+"""Functional acceptance tests for the contract renderer.
 
-Covers Acceptance Criterion AC-7 (render_primer contract) plus all AC-7-adjacent
+Covers Acceptance Criterion the render_primer contract and adjacent
 error modes using synthetic in-memory fixtures.
 
-No real graph.json required, no live API calls, no agentic/ internals accessed.
-QA-owned — exercises the public contract of atlas.contracts.render_primer only.
+No real graph.json required, no live API calls, no src/ internals accessed.
+exercises the public contract of backend.contracts.render_primer only.
 
-Contract reference: .agentic/spec/current.md §Output A (render_primer docstring)
-and §Acceptance Criteria AC-7.
+Contract reference: render_primer's docstring
+and §Acceptance Criteria .
 """
 
 from __future__ import annotations
@@ -125,17 +125,17 @@ def test_render_primer_has_blockquote_preamble():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: IN n / OUT m header present in both sections
+# IN n / OUT m header present in both sections
 # ---------------------------------------------------------------------------
 
 def test_ac7_dep_map_contains_in_out_counts():
-    """AC-7: dependency map section includes 'IN <n> / OUT <m>' for each file."""
+    """dependency map section includes 'IN <n> / OUT <m>' for each file."""
     result = render_primer(_two_file_contracts())
     assert "IN " in result and "/ OUT " in result
 
 
 def test_ac7_file_contracts_has_in_out_headings():
-    """AC-7: file contracts section uses '### `<file>` — IN <n> / OUT <m>' headings."""
+    """file contracts section uses '### `<file>` — IN <n> / OUT <m>' headings."""
     result = render_primer(_two_file_contracts())
     lines = result.splitlines()
     h3_with_in_out = [
@@ -148,7 +148,7 @@ def test_ac7_file_contracts_has_in_out_headings():
 
 
 def test_ac7_in_count_value_correct():
-    """AC-7: IN count in the rendered output equals len(referenced_by) for that file."""
+    """IN count in the rendered output equals len(referenced_by) for that file."""
     # a.py is imported by b.py and c.py → IN 2
     n_a = _make_node("a", "a.py", "a.py")
     n_b = _make_node("b", "b.py", "b.py")
@@ -160,7 +160,7 @@ def test_ac7_in_count_value_correct():
 
 
 def test_ac7_out_count_value_correct():
-    """AC-7: OUT count in the rendered output equals len(references) for that file."""
+    """OUT count in the rendered output equals len(references) for that file."""
     # a.py imports b.py and c.py → OUT 2
     n_a = _make_node("a", "a.py", "a.py")
     n_b = _make_node("b", "b.py", "b.py")
@@ -172,17 +172,17 @@ def test_ac7_out_count_value_correct():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: byte-identical determinism across two calls
+# byte-identical determinism across two calls
 # ---------------------------------------------------------------------------
 
 def test_ac7_byte_identical_no_subtree():
-    """AC-7: render_primer(contracts) is byte-identical on two consecutive calls."""
+    """render_primer(contracts) is byte-identical on two consecutive calls."""
     contracts = _two_file_contracts()
     assert render_primer(contracts) == render_primer(contracts)
 
 
 def test_ac7_byte_identical_with_subtree():
-    """AC-7: render_primer(contracts, subtree=...) is byte-identical on two consecutive calls."""
+    """render_primer(contracts, subtree=...) is byte-identical on two consecutive calls."""
     contracts = _subtree_fixture()
     r1 = render_primer(contracts, subtree="x/y")
     r2 = render_primer(contracts, subtree="x/y")
@@ -190,11 +190,11 @@ def test_ac7_byte_identical_with_subtree():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: subtree filtering
+# subtree filtering
 # ---------------------------------------------------------------------------
 
 def test_ac7_subtree_restricts_file_contract_cards():
-    """AC-7: with subtree='x/y', contract cards exist only for files under x/y."""
+    """with subtree='x/y', contract cards exist only for files under x/y."""
     contracts = _subtree_fixture()
     result = render_primer(contracts, subtree="x/y")
     # x/z/c.py must NOT have a card
@@ -205,7 +205,7 @@ def test_ac7_subtree_restricts_file_contract_cards():
 
 
 def test_ac7_subtree_cross_subtree_refs_in_card_body():
-    """AC-7: a cross-subtree reference path still appears in the card body text."""
+    """a cross-subtree reference path still appears in the card body text."""
     contracts = _subtree_fixture()
     result = render_primer(contracts, subtree="x/y")
     # x/y/a.py references x/z/c.py; that path must appear in the body even
@@ -214,7 +214,7 @@ def test_ac7_subtree_cross_subtree_refs_in_card_body():
 
 
 def test_ac7_subtree_title_in_heading():
-    """AC-7: the subtree string appears in the # Derived contracts heading."""
+    """the subtree string appears in the # Derived contracts heading."""
     contracts = _subtree_fixture()
     result = render_primer(contracts, subtree="x/y")
     first_line = result.splitlines()[0]
@@ -224,7 +224,7 @@ def test_ac7_subtree_title_in_heading():
 
 
 def test_ac7_no_subtree_all_files_get_cards():
-    """AC-7: when subtree is None, every file in contracts gets a file-contract card."""
+    """when subtree is None, every file in contracts gets a file-contract card."""
     contracts = _subtree_fixture()
     result = render_primer(contracts)
     for file_path in contracts:
@@ -232,7 +232,7 @@ def test_ac7_no_subtree_all_files_get_cards():
 
 
 def test_ac7_unmatched_subtree_no_file_cards():
-    """AC-7: a subtree matching no files produces no '### `...' card headings."""
+    """a subtree matching no files produces no '### `...' card headings."""
     contracts = _subtree_fixture()
     result = render_primer(contracts, subtree="does/not/exist")
     h3_card_lines = [l for l in result.splitlines() if l.startswith("### `")]
@@ -242,11 +242,11 @@ def test_ac7_unmatched_subtree_no_file_cards():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: field rendering — defines, references, referenced_by, inferred
+# field rendering — defines, references, referenced_by, inferred
 # ---------------------------------------------------------------------------
 
 def test_ac7_defines_field_lists_signatures():
-    """AC-7: file contract card includes 'defines:' with the file's signatures."""
+    """file contract card includes 'defines:' with the file's signatures."""
     n_mod = _make_node("mod", "mod.py", "mod.py")
     n_cls = _make_node("mod_cls", "MyClass", "mod.py")
     contracts = build_contracts(
@@ -258,7 +258,7 @@ def test_ac7_defines_field_lists_signatures():
 
 
 def test_ac7_empty_refs_render_as_dash():
-    """AC-7: a file with no references/referenced_by renders '—' (em-dash), not empty."""
+    """a file with no references/referenced_by renders '—' (em-dash), not empty."""
     n_lone = _make_node("lone", "lone.py", "lone.py")
     contracts = build_contracts(_graph(n_lone))
     result = render_primer(contracts)
@@ -268,7 +268,7 @@ def test_ac7_empty_refs_render_as_dash():
 
 
 def test_ac7_inferred_field_label():
-    """AC-7: file contract card uses the 'inferred (verify)' label for low-trust neighbours."""
+    """file contract card uses the 'inferred (verify)' label for low-trust neighbours."""
     n_a = _make_node("a", "a.py", "a.py")
     n_b = _make_node("b", "b.py", "b.py")
     # 'calls' is an INFERRED_RELATIONS member → inferred bucket
@@ -282,11 +282,11 @@ def test_ac7_inferred_field_label():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: sorted output
+# sorted output
 # ---------------------------------------------------------------------------
 
 def test_ac7_dependency_map_files_sorted():
-    """AC-7: files appear in sorted order within the dependency map."""
+    """files appear in sorted order within the dependency map."""
     n_z = _make_node("z", "z.py", "z.py")
     n_a = _make_node("a", "a.py", "a.py")
     n_m = _make_node("m", "m.py", "m.py")
@@ -301,7 +301,7 @@ def test_ac7_dependency_map_files_sorted():
 
 
 def test_ac7_file_contracts_headings_sorted():
-    """AC-7: ### headings in File contracts appear in sorted file-path order."""
+    """### headings in File contracts appear in sorted file-path order."""
     n_z = _make_node("z", "z.py", "z.py")
     n_a = _make_node("a", "a.py", "a.py")
     n_m = _make_node("m", "m.py", "m.py")
@@ -319,11 +319,11 @@ def test_ac7_file_contracts_headings_sorted():
 
 
 # ---------------------------------------------------------------------------
-# AC-7: title line
+# title line
 # ---------------------------------------------------------------------------
 
 def test_ac7_title_no_subtree_contains_repo():
-    """AC-7: when subtree is None, heading says 'repo'."""
+    """when subtree is None, heading says 'repo'."""
     result = render_primer(_two_file_contracts())
     first_line = result.splitlines()[0]
     assert "repo" in first_line.lower(), (
@@ -332,7 +332,7 @@ def test_ac7_title_no_subtree_contains_repo():
 
 
 def test_ac7_title_with_subtree_contains_subtree_value():
-    """AC-7: when subtree is given, heading contains that subtree string."""
+    """when subtree is given, heading contains that subtree string."""
     contracts = _subtree_fixture()
     result = render_primer(contracts, subtree="x/y")
     first_line = result.splitlines()[0]

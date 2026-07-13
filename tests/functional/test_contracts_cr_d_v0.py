@@ -1,19 +1,18 @@
-"""Functional acceptance tests for priming_contract_renderer_v0 — CR-D-QA wrap-up.
+"""Functional acceptance tests for the contract renderer.
 
-Covers the disk-path surface of the public contract that prior QA rounds (CR-A,
-CR-B) did not exercise:
+Covers the disk-path surface of the public contract that earlier tests did not exercise:
 
   * build_contracts_from_graph_json with a synthetic NetworkX node-link JSON
     temp file — the "convenience wrapper" contract path.
   * Error mode: file does not exist → exception raised (not a silent empty dict).
   * Integration: render_primer over contracts loaded from a JSON file.
 
-All other ACs (1–8) and error modes (EM-CR-NOKEY through EM-CR-SELF) are
-covered by test_atlas_contracts_v0.py and test_atlas_contracts_render_v0.py;
+All other criteria and error modes are
+covered by test_contracts_v0.py and test_contracts_render_v0.py;
 this file adds only what was missing.
 
-No live API calls, no real graphify-out/graph.json required, no agentic/
-internals read. QA-owned.
+No live API calls, no real graphify-out/graph.json required, no src/
+internals read.
 """
 
 from __future__ import annotations
@@ -161,11 +160,11 @@ def test_from_graph_json_determinism(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Error mode: missing file (EM-CR-NOGRAPH — non-@slow path raises, not skips)
+# Error mode: missing file (missing-graph — non-@slow path raises, not skips)
 # ---------------------------------------------------------------------------
 
 def test_from_graph_json_missing_file_raises(tmp_path):
-    """EM-CR-NOGRAPH (non-@slow path): missing JSON file raises an exception, not a silent {}."""
+    """missing-graph (non-@slow path): missing JSON file raises an exception, not a silent {}."""
     missing = tmp_path / "does_not_exist.json"
     assert not missing.exists()
     with pytest.raises(Exception):

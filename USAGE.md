@@ -20,7 +20,8 @@ you never maintain more than the moment requires.
 | You only need generated API reference | No — that's the `docs/` layer, authored on touch (or via graphify) | — |
 
 Cairn works on **any** project — a codebase, a novel, a content site, a business,
-a research program. It is not code-specific.
+a research program. It is not code-specific. (The pace-layered *spine* is what
+generalizes; the optional graphify backend — a derived MAP — is code-only.)
 
 ---
 

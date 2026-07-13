@@ -1,18 +1,14 @@
-"""Deterministic per-file contract renderer (Priming producer, step 2).
+"""Deterministic per-file dependency-contract renderer.
 
 ``build_contracts`` derives per-file dependency contracts from a graphify graph
-dict (the 0-token static analysis output). Pure Python, LLM-free; the trustable
+dict (the 0-token static-analysis output). Pure Python, LLM-free: the trustable
 EXTRACTED import/inherit edges become ``references``/``referenced_by``; lower-trust
-``INFERRED``/calls/uses edges become ``inferred``. This is the foundational layer
-the #152 spike proved agents trust without re-reading source.
+``INFERRED``/calls/uses edges become ``inferred``.
 
-Theory: the priming latency win comes from handing a stage a trustable, cheap
-orientation map so it stops re-deriving repo structure on every fresh-context
-dispatch. graphify extracts that structure deterministically (``cairn derive``,
-0 tokens); this module turns the raw symbol graph into per-file dependency
-contracts — reusing the ``reconcile.py`` rollup pattern — so the map is
-*derived and verifiable*, never hand-fudged. Correctness is load-bearing:
-a primed agent inherits the contract's framing.
+graphify extracts repo structure deterministically (``cairn derive``, 0 tokens);
+this module turns the raw symbol graph into per-file dependency contracts —
+reusing the ``reconcile.py`` rollup pattern — so the map is *derived and
+verifiable*, never hand-fudged.
 """
 from __future__ import annotations
 
@@ -27,8 +23,8 @@ from . import graphify_adapter
 # ---------------------------------------------------------------------------
 
 # Cross-file dependency relations graphify EXTRACTS with high confidence: a real
-# module-level import/inherit/re-export. The trustable dependency signal (the
-# #152 spike finding) — asserted in references/referenced_by.
+# module-level import/inherit/re-export. The trustable dependency signal,
+# asserted in references/referenced_by.
 DEP_RELATIONS: frozenset[str] = frozenset(
     {"imports", "imports_from", "re_exports", "inherits"}
 )
@@ -59,7 +55,7 @@ class FileContract:
     forward-slash paths (deterministic).
     """
 
-    file: str                       # repo-relative, forward-slash, e.g. "agentic/lint/core.py"
+    file: str                       # repo-relative, forward-slash, e.g. "src/core.py"
     signatures: tuple[str, ...]     # top-level symbols this file DEFINES (contains targets), sorted
     references: tuple[str, ...]     # OUT: files this file imports/inherits (EXTRACTED + DEP_RELATIONS), sorted
     referenced_by: tuple[str, ...]  # IN:  files that import/inherit this file (EXTRACTED + DEP_RELATIONS), sorted
@@ -98,7 +94,7 @@ def _is_code_node(n: dict[str, Any]) -> bool:
 
 
 def _norm_sf(sf: str) -> str:
-    """Normalize source_file path to forward-slash form (EM-CR-SEP)."""
+    """Normalize source_file path to forward-slash form."""
     return sf.replace("\\", "/")
 
 
@@ -126,12 +122,12 @@ def build_contracts(graph: dict[str, Any]) -> dict[str, FileContract]:
     Algorithm (spec current.md Output A §5-step):
       1. ``node_file``: map each node id → normalized ``source_file``, for nodes
          with ``file_type == "code"`` (or code extension if absent).  Nodes
-         without a qualifying source_file are ignored (EM-CR-NOSRC).
+         without a qualifying source_file are ignored.
       2. For each file, find its *file node* (``label == basename(file)``) and
          collect ``signatures`` from its ``contains``-edge targets with the
          reconcile label-noise filter (non-empty, no newline, len < 40).
-      3. Roll all edges to file pairs: skip dangling (EM-CR-DANGLE) and
-         intra-file (EM-CR-SELF) pairs, then route by confidence + relation:
+      3. Roll all edges to file pairs: skip dangling and intra-file pairs,
+         then route by confidence + relation:
            - EXTRACTED + DEP_RELATIONS → ``references`` / ``referenced_by``
            - INFERRED_RELATIONS OR confidence=="INFERRED" → ``inferred`` (both directions)
       4. Remove pairs already asserted in references/referenced_by from inferred
@@ -161,7 +157,7 @@ def build_contracts(graph: dict[str, Any]) -> dict[str, FileContract]:
             file_nodes_map.setdefault(sf_norm, []).append(n)
 
     if not node_file:
-        return {}  # EM-CR-NOKEY / no code nodes at all
+        return {}  # no code nodes at all
 
     all_files: set[str] = set(node_file.values())
 
@@ -204,9 +200,9 @@ def build_contracts(graph: dict[str, Any]) -> dict[str, FileContract]:
         fs = node_file.get(src_id)
         ft = node_file.get(tgt_id)
         if not fs or not ft:
-            continue  # EM-CR-DANGLE: endpoint has no known code file — skip
+            continue  # endpoint has no known code file — skip
         if fs == ft:
-            continue  # EM-CR-SELF: intra-file — skip
+            continue  # intra-file — skip
 
         relation = e.get("relation") or ""
         confidence = (e.get("confidence") or "").upper()
@@ -249,7 +245,7 @@ def build_contracts_from_graph_json(
 
 
 # ---------------------------------------------------------------------------
-# render_primer — CR-B
+# render_primer
 # ---------------------------------------------------------------------------
 
 
@@ -263,9 +259,9 @@ def _fmt_paths(paths: tuple[str, ...]) -> str:
 def render_primer(
     contracts: dict[str, "FileContract"], subtree: str | None = None
 ) -> str:
-    """Render the deterministic, LLM-free 'contracts-only primer' markdown.
+    """Render the deterministic, LLM-free per-file dependency-contract markdown.
 
-    When *subtree* is given (e.g. ``"agentic/lint"``), emit contract cards only
+    When *subtree* is given (e.g. ``"src/pkg"``), emit contract cards only
     for files under that path; cross-references to files OUTSIDE the subtree are
     still listed (as paths). Output is stable across runs (files sorted, refs
     sorted). Sections:

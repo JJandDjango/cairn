@@ -5,9 +5,9 @@ CLI. Pinned at `graphifyy==0.8.31`; upgrades are deliberate. All graphify CLI
 contact is isolated to this one file, so upstream churn is a one-file fix. MIT
 upstream means a vendored fork is the escape hatch if it paywalls/pivots.
 
-Pass 1 exposes only the no-LLM path (`graphify update`, 0 tokens). LLM-on
-semantic extraction (`graphify extract`, which gates on a backend key) arrives
-with the reconciliation loop in Pass 2.
+Only the no-LLM path (`graphify update`, 0 tokens) is wrapped. LLM-on semantic
+extraction (`graphify extract`, which gates on a backend key) is intentionally
+not used.
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ def _graphify() -> str:
 def version() -> str:
     # Decode subprocess output UTF-8/replace: graphify output is not guaranteed
     # ASCII and the OS locale codec (cp1252 on Windows) crashes on bytes
-    # undefined there. Harness-wide policy; see cli_runner.py. (#133)
+    # undefined there.
     out = subprocess.run([_graphify(), "--version"], capture_output=True,
                          text=True, encoding="utf-8", errors="replace", timeout=30)
     return (out.stdout or out.stderr).strip()
@@ -52,8 +52,8 @@ def update(path: str | Path, timeout: int = 900) -> Path:
     """Run the no-LLM `graphify update` (0 tokens, local CPU) over `path`.
 
     Returns the path to `graphify-out/graph.json`. This is the `--fast` /
-    pointer-only path; `graphify extract` (LLM-on) is intentionally not wrapped
-    in Pass 1.
+    pointer-only path; `graphify extract` (LLM-on) is intentionally not
+    wrapped.
     """
     target = Path(path).resolve()
     # graphify's `update <path>` is cwd-relative by design ("cd <repo> && update .").

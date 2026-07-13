@@ -20,7 +20,7 @@ skill's own directory holds the renderer and templates:
   <skill-dir>/render.py
   <skill-dir>/templates/*.template   (plus templates/decisions/)
 
-Portability: unlike a harness bootstrap, Cairn does NOT require a git repo - a
+Portability: Cairn does NOT require a git repo - a
 novel or a business plan is a valid target. It detects a git root only to offer
 it, never to gate.
 
