@@ -23,6 +23,8 @@ import argparse
 import sys
 from pathlib import Path
 
+import yaml
+
 from . import graphify_adapter as gfx
 from . import reconcile, schema, vault
 
@@ -32,7 +34,21 @@ AUTHORED_DOC = "MAP.md"
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
-    fm, _ = schema.parse(args.path)
+    try:
+        fm, _ = schema.parse(args.path)
+    except (OSError, UnicodeDecodeError) as e:
+        # Can't read/decode the file at all (missing path, a directory,
+        # permissions, non-UTF-8) — distinct from unparseable content.
+        print(f"cannot read {args.path}: {e}")
+        return 1
+    except (schema.MapParseError, yaml.YAMLError) as e:
+        # The file reads but is not a usable structured MAP: no '---' frontmatter
+        # (a hand-authored backend: none MAP — decisions/0004), an unterminated
+        # fence, a non-mapping, or malformed YAML. Report cleanly rather than
+        # crashing — honoring the never-crash contract of decisions/0002; the
+        # schema applies only to graphify-backed MAPs.
+        print(f"INVALID ({args.path}): {e}")
+        return 1
     errors = schema.validate(fm)
     if errors:
         print(f"INVALID ({len(errors)} error(s)):")
