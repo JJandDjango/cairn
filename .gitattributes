@@ -1,0 +1,3 @@
+# Canonical line endings: LF in the repository and on checkout.
+# Cairn is a cross-platform tool; LF is the source-of-record EOL.
+* text=auto eol=lf

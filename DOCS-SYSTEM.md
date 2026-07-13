@@ -17,6 +17,22 @@ Scaffolded by **Cairn** - a durable documentation spine for any project.
 | `docs/` | How does each piece work? | mirrors structure | internals change | authored on touch (or generated) |
 | `STATE.md` | What's in flight now? | <=1 page | every session end | regenerated, disposable |
 
+## Day 2 - the routine
+
+Each file has exactly ONE trigger - touch it only then, and only that file. This is
+the drill between the strata table (the model) and the audit checklist (the proof).
+
+| File | Touch it when... | How |
+|---|---|---|
+| `THEORY.md` | purpose or an invariant changes (rare) | Hand-edit in place. If the intent is still tagged `(inferred)`, confirm it and delete the tag. |
+| `MAP.md` | you add / remove / rewire a Component | Update that Component's row (add / edit / delete). |
+| `decisions/` | you make a choice a future you would question | Copy `ADR-template.md` -> `NNNN-short-title.md`; fill Context / Decision / Consequences. |
+| `docs/<piece>.md` | you first work on a piece in depth | Author its page then - on first deep touch, not upfront. |
+| `STATE.md` | the end of every work session | Overwrite it wholesale - it is disposable, your running handoff. |
+
+**If you keep only one rule:** decisions are append-only and `STATE.md` is
+throwaway - everything else is edited in place, and rarely.
+
 ## Maintenance rules
 - **ADRs are append-only.** Never edit one; supersede it with a new record (mark the old `superseded by NNNN`). Copy `decisions/ADR-template.md` to start a new record.
 - **One diagram per project**, in `MAP.md`, at ~container zoom. Nothing deeper - it rots faster than you can maintain it.

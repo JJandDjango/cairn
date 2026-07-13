@@ -5,7 +5,7 @@ and the invariants; this file holds the *sequence and the gates*. Direction: a
 focused, standalone, zero-dependency **living** documentation system - built for
 the author now, public-ready later.
 
-**Current:** `v0.1.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
+**Current:** `v1.0.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
 own spine is present (this repo dogfoods itself) and standalone - code, tests, and
 docs carry no knowledge of any external tool. See `STATE.md` for what's in flight.
 
@@ -25,9 +25,9 @@ backend, all self-contained ([[0003-1.0-scope]]). Gates:
       `pyproject.toml` is pytest-config-only (documented in-file).
 - [x] **"Any project" scoped honestly** - README + USAGE state the *spine*
       generalizes while *derived* / backend features are code-only + optional.
-- [ ] **Maintenance discipline complete** - `DOCS-SYSTEM.md` fully specifies the
+- [x] **Maintenance discipline complete** - `DOCS-SYSTEM.md` fully specifies the
       day-2 routine + audit checklist (the "living" in living system).
-- [ ] **Backend documented** - `derive` / `reconcile` / `view` written up as the
+- [x] **Backend documented** - `derive` / `reconcile` / `view` written up as the
       optional automation tier (a `docs/` page).
 
 ## Post-1.0 - public
@@ -35,7 +35,8 @@ backend, all self-contained ([[0003-1.0-scope]]). Gates:
 Flip from personal to distributable (the standalone invariants held since 1.0 make
 this a flip, not a rewrite).
 
-- [ ] **GitHub remote** + `marketplace.json` validated + `plugin.json` complete.
+- [x] **GitHub remote** + `marketplace.json` validated + `plugin.json` complete.
+      *(remote exists — private; manifests validated + completed. Public flip is the `Publish` gate below.)*
 - [ ] **Stranger onboarding** - quickstart hardened for someone who has never seen
       Cairn.
 - [ ] **Publish** to the plugin marketplace.

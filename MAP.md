@@ -30,11 +30,11 @@ flowchart TD
 ### Backend - OPTIONAL, code-only graphify integration ([[0002-optional-graphify-backend]])
 | Component | Responsibility (one line) | Status | Deep doc |
 |---|---|---|---|
-| `backend/graphify_adapter.py` | `derive` a structured code graph -> `graphify-out/graph.json`. | optional | no doc yet |
-| `backend/reconcile.py` | Diff derived graph vs authored MAP -> `proposals.md`; `--apply` writes accepted rows. | optional | no doc yet |
+| `backend/graphify_adapter.py` | `derive` a structured code graph -> `graphify-out/graph.json`. | optional | `docs/backend.md` |
+| `backend/reconcile.py` | Diff derived graph vs authored MAP -> `proposals.md`; `--apply` writes accepted rows. | optional | `docs/backend.md` |
 | `backend/contracts.py` | Render a deterministic per-file dependency-contract report from the graph. | optional | no doc yet |
-| `backend/schema.py` + `vault.py` | Structured-MAP schema (PyYAML) + portfolio vault roll-up (`view`). | optional | no doc yet |
-| `backend_cli.py` + `backend/__main__.py` | Absolute-path launcher + subcommand dispatch (derive / reconcile / view / stage / validate / vault-add). | stable | no doc yet |
+| `backend/schema.py` + `vault.py` | Structured-MAP schema (PyYAML) + portfolio vault roll-up (`view`). | optional | `docs/backend.md` |
+| `backend_cli.py` + `backend/__main__.py` | Absolute-path launcher + subcommand dispatch (derive / reconcile / view / stage / validate / vault-add). | stable | `docs/backend.md` |
 
 ## Cross-cutting notes
 - **Core vs backend is the load-bearing seam.** The core is zero-dependency and
@@ -43,4 +43,4 @@ flowchart TD
 - **Derived output is regenerable + gitignored** (`graphify-out/`,
   `/manifest.json`); authored markdown is the source of record.
 - Docs live outside the strata: `README.md` (overview) + `USAGE.md`
-  (step-by-step). No `docs/` pages authored yet.
+  (step-by-step). The optional backend has a `docs/` page: `docs/backend.md`.

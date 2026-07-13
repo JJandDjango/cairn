@@ -43,7 +43,7 @@ Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn   # Windows
 ```
 
 ### As a Claude Code plugin
-Once this repo is on GitHub, add it as a marketplace and install:
+Once the repo is public, add it as a marketplace and install:
 
 ```
 /plugin marketplace add JJandDjango/cairn

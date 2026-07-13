@@ -54,7 +54,7 @@ python skills/cairn/render.py --cwd ./my-project --answers '{
 keys are exactly the five in §3.
 
 ### C) As a plugin (for distribution)
-Once the repo is on GitHub:
+Once the repo is public:
 
 ```
 /plugin marketplace add JJandDjango/cairn
