@@ -4,6 +4,8 @@
 > backend. The zero-dependency core (`render.py` + `templates/` + `/cairn`) needs
 > none of it.
 
+<!-- covers: skills/cairn/backend/, skills/cairn/backend_cli.py, skills/cairn/detect.py -->
+
 ## What it is
 An optional, code-only tier that automates ONE stratum - `MAP.md` - by deriving a
 structured code graph and reconciling it against your authored MAP. It is

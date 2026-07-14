@@ -77,6 +77,9 @@ file: run it on a half-documented project and it fills only the gaps.
 - **The `graphify` backend** (code only) adds an optional structured-MAP stub and
   `graphify-out/` + `/manifest.json` to `.gitignore`; `/cairn derive`/`reconcile`/`view`
   build and reconcile a structured MAP from the code graph.
+- **Day 2:** `/cairn audit` makes the checklist executable (report-only, zero-dep);
+  `/cairn maintain` has your agent do the session-end touches — detection is
+  automated, authorship stays human-reviewed.
 
 ## Principle
 

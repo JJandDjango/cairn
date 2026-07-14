@@ -1,6 +1,6 @@
 ---
 name: cairn
-description: Scaffold a durable, pace-layered documentation spine into any project - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and (for code) an optional graphify backend, then renders five strata - THEORY.md (why), MAP.md (structure), decisions/ (append-only ADRs), docs/ (detail), STATE.md (in-flight) - each under a fixed one-question contract, plus a DOCS-SYSTEM.md audit checklist. No-clobber, so it is safe to run on a partly-documented project. Use when starting or standardizing a project's documentation.
+description: Scaffold a durable, pace-layered documentation spine into any project - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and (for code) an optional graphify backend, then renders five strata - THEORY.md (why), MAP.md (structure), decisions/ (append-only ADRs), docs/ (detail), STATE.md (in-flight) - each under a fixed one-question contract, plus a DOCS-SYSTEM.md audit checklist. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only spine checker) and `/cairn maintain` (session-end routine - audit, touch MAP/docs for what changed, regenerate STATE). Use when starting, standardizing, or maintaining a project's documentation.
 ---
 
 # `/cairn` - scaffold a pace-layered documentation spine
@@ -16,8 +16,9 @@ The skill interviews the user, then calls a zero-dependency renderer.
 
 <context>
 Runs in the target project's Claude Code session; cwd is the project. This
-skill's own directory holds the renderer and templates:
+skill's own directory holds the renderer, the auditor, and templates:
   <skill-dir>/render.py
+  <skill-dir>/audit.py               (zero-dep spine checker, report-only)
   <skill-dir>/templates/*.template   (plus templates/decisions/)
 
 Portability: Cairn does NOT require a git repo - a
@@ -32,7 +33,11 @@ Outputs (into the target dir; none overwritten if already present):
 </context>
 
 <instructions>
-0. DISPATCH. If this skill was invoked with a first argument naming a backend subcommand - `derive`, `reconcile` (or `refresh`), `view`, `stage`, `validate`, `vault-add` - do NOT run the interview: go to <backend-subcommands> below and forward the call. Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7.
+0. DISPATCH. If this skill was invoked with a first argument naming a subcommand, do NOT run the interview:
+   - `audit` - CORE, zero-dep: go to <audit-subcommand>.
+   - `maintain` - CORE, the session-end routine: go to <maintain-subcommand>.
+   - `derive`, `reconcile` (or `refresh`), `view`, `stage`, `validate`, `vault-add` - OPTIONAL backend: go to <backend-subcommands> and forward the call.
+   Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7.
 
 1. CONFIRM the target directory. Default to cwd. Run `git rev-parse --show-toplevel` via Bash; if it succeeds and differs from cwd, ASK the user (AskUserQuestion) whether to target the git root or cwd. If it is not a git repo, that is fine - proceed with cwd. NEVER refuse for lack of git.
 
@@ -70,6 +75,52 @@ Outputs (into the target dir; none overwritten if already present):
    the full contract + audit checklist." If backend == graphify, ALSO tell the user: "Run `/cairn derive` to build the structured MAP from the code graph, then `/cairn reconcile` to keep authored vs derived honest (needs graphify + PyYAML)." If render failed, REPORT the stderr and EXIT.
 </instructions>
 
+<audit-subcommand>
+`/cairn audit` runs the zero-dependency spine checker - the DOCS-SYSTEM audit
+checklist, executable. Report-only: it never writes anything.
+
+1. RUN - one Bash call, by absolute path, with NO detect.py gate (audit is core
+   and needs no optional deps):
+       python "<skill-dir>/audit.py" --cwd .
+2. REPORT stdout verbatim. Exit 0 = clean; exit 1 = findings, each carrying a
+   code (e.g. MAP-DOC-MISSING, STATE-STALE, DOCS-STALE); exit 2 = no spine here
+   (offer the scaffold interview instead). Do NOT fix findings unasked - audit
+   automates detection; the touches stay with the user (or `/cairn maintain`).
+</audit-subcommand>
+
+<maintain-subcommand>
+`/cairn maintain` is the session-end routine: automate the DETECTION, keep the
+authorship human-reviewed. The agent performs the day-2 touches for what this
+session actually changed; every write lands uncommitted for the user's review.
+
+1. AUDIT (before) - one Bash call:
+       python "<skill-dir>/audit.py" --cwd . --format json
+   Collect the findings. Exit 2 = no spine: offer the scaffold interview and end
+   maintain there.
+2. GATHER what actually changed this session. In a git repo run
+   `git status --porcelain` (one Bash call) and `git diff --stat` (another);
+   otherwise ASK the user for a one-line summary of the session's work.
+3. TOUCH MAP.md - for each piece the observed changes show was added, removed,
+   or rewired, update that row (add / edit / delete). NEVER invent or embellish
+   a row beyond the observed changes; when unsure whether a piece was rewired,
+   ask.
+4. TOUCH docs/ - for each piece deeply worked this session, author or refresh
+   its `docs/<piece>.md`, and set/refresh the page's `<!-- covers: ... -->`
+   marker so future staleness stays checkable.
+5. FLAG the human-owned strata - NEVER edit THEORY.md or any existing
+   decisions/*.md. If the session's changes look purpose- or invariant-shaped,
+   TELL the user to hand-edit THEORY.md. If a change is decision-shaped (a
+   future session would ask "why is it done this way?"), ASK (AskUserQuestion)
+   whether to draft a new ADR from decisions/ADR-template.md; draft ONLY on an
+   explicit yes.
+6. REGENERATE STATE.md wholesale - Now / Blockers / Next actions / Open
+   questions, stamped with today's date. Overwrite; never hand-patch.
+7. AUDIT (after) - one Bash call:
+       python "<skill-dir>/audit.py" --cwd .
+   REPORT before -> after findings plus every file touched. Do NOT commit -
+   the user reviews and commits.
+</maintain-subcommand>
+
 <backend-subcommands>
 For a code project, `/cairn <subcommand>` forwards to the OPTIONAL backend (the
 migrated graphify engine). The zero-dep scaffold never needs this; it is only for
@@ -102,6 +153,8 @@ deriving / reconciling / viewing a structured MAP.
 - Do NOT reimplement graphify. The graphify backend lives in `backend/` (the migrated engine); the scaffold only adds an optional structured-MAP stub + .gitignore entries. Derive / reconcile / view run through the backend subcommands (see <backend-subcommands>), always gated by the feature-detector - never inline here.
 - Do NOT hand-edit the templates during a run. Project values land via {{ var }} substitution only.
 - Do NOT author docs/ pages up front. That layer is authored on touch (or generated); the scaffold leaves docs/ empty.
+- `audit` is core and report-only: never route it through detect.py, and never "fix" its findings unasked.
+- `maintain` writes ONLY MAP.md, docs/, and STATE.md. THEORY.md and existing decisions/ records are flag-only; a new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
 </constraints>
 
 <criteria>
@@ -113,4 +166,6 @@ deriving / reconciling / viewing a structured MAP.
 - [ ] Strata present at target (or reported skipped where pre-existing); nothing overwritten.
 - [ ] Outcome + next-steps + DOCS-SYSTEM.md pointer reported to the user.
 - [ ] If invoked with a backend subcommand: detect.py gated it, then the launcher forwarded it (or a clean "unavailable" was reported) - the interview did NOT run.
+- [ ] If invoked as `audit`: audit.py ran by absolute path with no detect gate; findings reported verbatim; nothing was written.
+- [ ] If invoked as `maintain`: every touch grounded in observed changes; THEORY.md and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
 </criteria>

@@ -8,6 +8,7 @@
 flowchart TD
     U[/cairn skill - SKILL.md/] --> R[render.py - zero-dep core]
     R --> T[templates/ - the five strata]
+    U --> A[audit.py - day-2 spine checker]
     U -. backend subcommand .-> D[detect.py - dependency gate]
     D -. only if available .-> B[backend/ - OPTIONAL graphify integration]
     B --> G[graphify adapter - derive]
@@ -23,8 +24,9 @@ flowchart TD
 | Component | Responsibility (one line) | Status | Deep doc |
 |---|---|---|---|
 | `render.py` | Substitute the five templates into a project (no-clobber, date-stamped). The whole core engine. | stable | USAGE.md |
+| `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). | stable | `docs/audit.md` |
 | `templates/` | The five strata + DOCS-SYSTEM + seed ADR & ADR-template, with `{{ var }}` slots. | stable | DOCS-SYSTEM.md |
-| `SKILL.md` (`/cairn`) | The Claude Code interview that collects the five answers and calls the renderer. | stable | no doc yet |
+| `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) and backend subcommands. | stable | no doc yet |
 | `detect.py` | Feature-detector that gates the optional backend (absent deps report cleanly, never crash). | stable | no doc yet |
 
 ### Backend - OPTIONAL, code-only graphify integration ([[0002-optional-graphify-backend]])

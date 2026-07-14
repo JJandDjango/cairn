@@ -120,6 +120,21 @@ only then.
 If you remember only one rule: **decisions are append-only, and `STATE.md` is
 throwaway.** Everything else is edited in place, rarely.
 
+### Automating the routine
+
+Detection is automated; authorship stays yours (reviewed at commit):
+
+- **`/cairn audit`** — the §7 checklist, executable. Flags broken MAP→docs
+  links, budget overruns, lingering `(inferred)` tags, edited ADRs and dangling
+  supersedes, a stale `STATE.md` stamp, and stale docs pages (declare what a
+  page explains with `<!-- covers: paths -->` and staleness becomes checkable).
+  Report-only — it never writes. Exit 0 clean / 1 findings / 2 no spine. Also
+  standalone: `python skills/cairn/audit.py --cwd .`
+- **`/cairn maintain`** — session end, one command: your agent runs audit, does
+  the MAP-row and docs-page touches for what the session *actually* changed,
+  regenerates `STATE.md`, re-audits, and leaves every edit uncommitted for your
+  review. `THEORY.md` and old ADRs are never machine-touched — only flagged.
+
 ---
 
 ## 6. A worked example (a novel, start to finish)
@@ -150,7 +165,7 @@ Swap "Chapters" for "Components" and it's the identical routine for a codebase.
 ## 7. The rules that keep it from rotting
 
 Every scaffolded project carries `DOCS-SYSTEM.md` with the full contract plus this
-checklist:
+checklist (`/cairn audit` checks it mechanically):
 
 - [ ] ADRs are never edited; superseding records exist where decisions changed.
 - [ ] Exactly one diagram in the project, in `MAP.md`.
@@ -170,3 +185,4 @@ checklist:
 | "Wrong project type" | The output is plain markdown — edit the labels, or delete the files and re-run. |
 | "Standalone: `--answers is not valid JSON`" | Pass the JSON as a single quoted shell argument; keys must be the five in §3. |
 | "Non-code project" | Expected — the component unit becomes chapter / section / etc., and the diagram is omitted. |
+| "`audit` warns STATE-STALE / DOCS-STALE" | The spine lags reality — do that file's day-2 touch (§5), or run `/cairn maintain` at session end. |

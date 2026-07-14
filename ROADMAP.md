@@ -30,6 +30,20 @@ backend, all self-contained ([[0003-1.0-scope]]). Gates:
 - [x] **Backend documented** - `derive` / `reconcile` / `view` written up as the
       optional automation tier (a `docs/` page).
 
+## 1.1 - the living-system tier
+
+Automate the *detection* half of day-2 upkeep; authorship stays human-reviewed
+([[0006-automate-detection-not-authorship]]). Gates:
+
+- [x] **Audit shipped** - `/cairn audit` (`audit.py`, zero-dep core): the
+      DOCS-SYSTEM checklist executable, report-only, git-optional; a fresh
+      scaffold passes its own audit (regression-tested).
+- [x] **Maintain documented** - `/cairn maintain` session-end routine in
+      SKILL.md: agent touches MAP / docs / STATE grounded in the observed diff;
+      THEORY and old ADRs are flag-only.
+- [ ] **Version stamped `1.1.0`** - `.claude-plugin/plugin.json` (held for the
+      user's release call).
+
 ## Post-1.0 - public
 
 Flip from personal to distributable (the standalone invariants held since 1.0 make
