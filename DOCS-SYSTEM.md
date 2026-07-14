@@ -33,6 +33,12 @@ the drill between the strata table (the model) and the audit checklist (the proo
 **If you keep only one rule:** decisions are append-only and `STATE.md` is
 throwaway - everything else is edited in place, and rarely.
 
+**Automating the routine:** `/cairn audit` checks the list at the bottom
+mechanically (report-only; exit 1 on findings). `/cairn maintain` has your agent
+walk this whole routine at session end - it touches MAP / docs / STATE grounded
+in what actually changed, never THEORY or old ADRs, and leaves every edit
+uncommitted for your review.
+
 ## Maintenance rules
 - **ADRs are append-only.** Never edit one; supersede it with a new record (mark the old `superseded by NNNN`). Copy `decisions/ADR-template.md` to start a new record.
 - **One diagram per project**, in `MAP.md`, at ~container zoom. Nothing deeper - it rots faster than you can maintain it.
@@ -40,6 +46,7 @@ throwaway - everything else is edited in place, and rarely.
 - **Definition of done includes the doc touch** - a change to a Component's responsibility updates its `MAP.md` row (and its `docs/` page if one exists).
 
 ## Audit checklist
+Run `/cairn audit` to check every box below mechanically.
 - [ ] ADRs are never edited; superseding records exist where decisions changed.
 - [ ] Exactly one diagram in the project, located in `MAP.md`.
 - [ ] `THEORY.md` <=1 page - `MAP.md` <=2 pages - each ADR <=1/2 page - `STATE.md` <=1 page.
