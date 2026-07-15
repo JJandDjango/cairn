@@ -1,6 +1,6 @@
 {
   "name": "cairn",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A durable, pace-layered documentation spine for any project — code or not. Scaffolds five strata, each under a fixed one-question contract.",
   "author": {
     "name": "Johnathan Hyden"

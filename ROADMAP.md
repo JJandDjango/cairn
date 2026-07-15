@@ -5,7 +5,7 @@ and the invariants; this file holds the *sequence and the gates*. Direction: a
 focused, standalone, zero-dependency **living** documentation system - built for
 the author now, public-ready later.
 
-**Current:** `v1.0.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
+**Current:** `v1.1.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
 own spine is present (this repo dogfoods itself) and standalone - code, tests, and
 docs carry no knowledge of any external tool. See `STATE.md` for what's in flight.
 
@@ -41,8 +41,8 @@ Automate the *detection* half of day-2 upkeep; authorship stays human-reviewed
 - [x] **Maintain documented** - `/cairn maintain` session-end routine in
       SKILL.md: agent touches MAP / docs / STATE grounded in the observed diff;
       THEORY and old ADRs are flag-only.
-- [ ] **Version stamped `1.1.0`** - `.claude-plugin/plugin.json` (held for the
-      user's release call).
+- [x] **Version stamped `1.1.0`** - `.claude-plugin/plugin.json` (stamped
+      2026-07-15 on the user's release call).
 
 ## 1.2 - the conventions stratum (proposed)
 
