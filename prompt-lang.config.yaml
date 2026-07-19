@@ -1,0 +1,24 @@
+# PromptLang scope for this repo. The foundations hook loads this file from
+# the session cwd (write-time validation in cairn-cwd sessions); the CLI takes
+# it via --config; tests/test_promptlang.py is the batch gate (auto-skips where
+# prompt_lang isn't installed, so the zero-dep contract holds). SKILL.md is the
+# claimed artifact class; spine docs and templates stay unclaimed reference
+# text. optional_tags REPLACES the packaged default list, so it carries the
+# standard eight plus this skill's three section tags (the dispatch targets in
+# SKILL.md step 0).
+validation:
+  optional_tags:
+    - variables
+    - context
+    - constraints
+    - examples
+    - output
+    - criteria
+    - routing
+    - directives
+    - audit-subcommand
+    - maintain-subcommand
+    - backend-subcommands
+file_rules:
+  - pattern: "**/skills/*/SKILL.md"
+    required_tags: [purpose, instructions]

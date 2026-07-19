@@ -27,6 +27,7 @@ flowchart TD
 | `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). | stable | `docs/audit.md` |
 | `templates/` | The five strata + DOCS-SYSTEM + seed ADR & ADR-template, with `{{ var }}` slots. | stable | DOCS-SYSTEM.md |
 | `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) and backend subcommands. | stable | no doc yet |
+| `prompt-lang.config.yaml` | PromptLang claim for the skill prompt - registers its section tags; write-time hook + `tests/test_promptlang.py` enforce ([[0007-adopt-promptlang-for-the-skill-prompt]]). | stable | no doc yet |
 | `detect.py` | Feature-detector that gates the optional backend (absent deps report cleanly, never crash). | stable | no doc yet |
 
 ### Backend - OPTIONAL, code-only graphify integration ([[0002-optional-graphify-backend]])

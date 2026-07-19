@@ -17,9 +17,9 @@ The skill interviews the user, then calls a zero-dependency renderer.
 <context>
 Runs in the target project's Claude Code session; cwd is the project. This
 skill's own directory holds the renderer, the auditor, and templates:
-  <skill-dir>/render.py
-  <skill-dir>/audit.py               (zero-dep spine checker, report-only)
-  <skill-dir>/templates/*.template   (plus templates/decisions/)
+  {skill-dir}/render.py
+  {skill-dir}/audit.py               (zero-dep spine checker, report-only)
+  {skill-dir}/templates/*.template   (plus templates/decisions/)
 
 Portability: Cairn does NOT require a git repo - a
 novel or a business plan is a valid target. It detects a git root only to offer
@@ -34,9 +34,9 @@ Outputs (into the target dir; none overwritten if already present):
 
 <instructions>
 0. DISPATCH. If this skill was invoked with a first argument naming a subcommand, do NOT run the interview:
-   - `audit` - CORE, zero-dep: go to <audit-subcommand>.
-   - `maintain` - CORE, the session-end routine: go to <maintain-subcommand>.
-   - `derive`, `reconcile` (or `refresh`), `view`, `stage`, `validate`, `vault-add` - OPTIONAL backend: go to <backend-subcommands> and forward the call.
+   - `audit` - CORE, zero-dep: go to the audit-subcommand section.
+   - `maintain` - CORE, the session-end routine: go to the maintain-subcommand section.
+   - `derive`, `reconcile` (or `refresh`), `view`, `stage`, `validate`, `vault-add` - OPTIONAL backend: go to the backend-subcommands section and forward the call.
    Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7.
 
 1. CONFIRM the target directory. Default to cwd. Run `git rev-parse --show-toplevel` via Bash; if it succeeds and differs from cwd, ASK the user (AskUserQuestion) whether to target the git root or cwd. If it is not a git repo, that is fine - proceed with cwd. NEVER refuse for lack of git.
@@ -61,8 +61,8 @@ Outputs (into the target dir; none overwritten if already present):
    If a validation fails, REPORT it and re-ask just that item (up to 3 times), then EXIT.
 
 6. RENDER - one Bash call:
-       python <skill-dir>/render.py --answers '{json}'
-   where <skill-dir> is this skill's base directory and {json} is the answer dict
+       python {skill-dir}/render.py --answers '{json}'
+   where {skill-dir} is this skill's base directory and {json} is the answer dict
    as a single-quoted shell argument (escape inner double quotes as the shell
    needs). The renderer substitutes {{ var }} placeholders, stamps the date, skips
    any file that already exists, and (for the graphify backend) appends to .gitignore.
@@ -81,7 +81,7 @@ checklist, executable. Report-only: it never writes anything.
 
 1. RUN - one Bash call, by absolute path, with NO detect.py gate (audit is core
    and needs no optional deps):
-       python "<skill-dir>/audit.py" --cwd .
+       python "{skill-dir}/audit.py" --cwd .
 2. REPORT stdout verbatim. Exit 0 = clean; exit 1 = findings, each carrying a
    code (e.g. MAP-DOC-MISSING, STATE-STALE, DOCS-STALE); exit 2 = no spine here
    (offer the scaffold interview instead). Do NOT fix findings unasked - audit
@@ -94,7 +94,7 @@ authorship human-reviewed. The agent performs the day-2 touches for what this
 session actually changed; every write lands uncommitted for the user's review.
 
 1. AUDIT (before) - one Bash call:
-       python "<skill-dir>/audit.py" --cwd . --format json
+       python "{skill-dir}/audit.py" --cwd . --format json
    Collect the findings. Exit 2 = no spine: offer the scaffold interview and end
    maintain there.
 2. GATHER what actually changed this session. In a git repo run
@@ -105,7 +105,7 @@ session actually changed; every write lands uncommitted for the user's review.
    a row beyond the observed changes; when unsure whether a piece was rewired,
    ask.
 4. TOUCH docs/ - for each piece deeply worked this session, author or refresh
-   its `docs/<piece>.md`, and set/refresh the page's `<!-- covers: ... -->`
+   its `docs/{piece}.md`, and set/refresh the page's `<!-- covers: ... -->`
    marker so future staleness stays checkable.
 5. FLAG the human-owned strata - NEVER edit THEORY.md or any existing
    decisions/*.md. If the session's changes look purpose- or invariant-shaped,
@@ -116,18 +116,18 @@ session actually changed; every write lands uncommitted for the user's review.
 6. REGENERATE STATE.md wholesale - Now / Blockers / Next actions / Open
    questions, stamped with today's date. Overwrite; never hand-patch.
 7. AUDIT (after) - one Bash call:
-       python "<skill-dir>/audit.py" --cwd .
+       python "{skill-dir}/audit.py" --cwd .
    REPORT before -> after findings plus every file touched. Do NOT commit -
    the user reviews and commits.
 </maintain-subcommand>
 
 <backend-subcommands>
-For a code project, `/cairn <subcommand>` forwards to the OPTIONAL backend (the
+For a code project, `/cairn {subcommand}` forwards to the OPTIONAL backend (the
 migrated graphify engine). The zero-dep scaffold never needs this; it is only for
 deriving / reconciling / viewing a structured MAP.
 
 1. GATE on the feature-detector FIRST - one Bash call:
-       python "<skill-dir>/detect.py"
+       python "{skill-dir}/detect.py"
    Exit 0 = backend available. Non-zero = REPORT the printed reason verbatim
    ("backend unavailable - missing: graphify ... / PyYAML ...") and STOP; do NOT
    attempt the subcommand. This is the load-bearing guard: absent deps report and
@@ -136,9 +136,9 @@ deriving / reconciling / viewing a structured MAP.
 2. FORWARD the call - one Bash call, by ABSOLUTE path to the launcher (it puts the
    skill dir on sys.path; `python -m backend` is not resolvable from the target
    cwd, and `python backend/__main__.py` fails on the package-relative imports):
-       python "<skill-dir>/backend_cli.py" <subcommand> <args>
-   <subcommand> is one of derive | reconcile | view | stage | validate | vault-add;
-   <args> pass through (the target path defaults to `.`). Common shapes:
+       python "{skill-dir}/backend_cli.py" {subcommand} {args}
+   {subcommand} is one of derive | reconcile | view | stage | validate | vault-add;
+   {args} pass through (the target path defaults to `.`). Common shapes:
        derive .              # graphify update -> graphify-out/graph.json (0 tokens)
        reconcile .           # diff graph vs MAP.md -> graphify-out/proposals.md
        reconcile . --apply   # write the checked proposals into MAP.md
@@ -150,7 +150,7 @@ deriving / reconciling / viewing a structured MAP.
 <constraints>
 - Do NOT overwrite existing documentation. The renderer is no-clobber by design; never add a flag or step that forces an overwrite.
 - Do NOT require a git repository. Non-code projects are first-class targets.
-- Do NOT reimplement graphify. The graphify backend lives in `backend/` (the migrated engine); the scaffold only adds an optional structured-MAP stub + .gitignore entries. Derive / reconcile / view run through the backend subcommands (see <backend-subcommands>), always gated by the feature-detector - never inline here.
+- Do NOT reimplement graphify. The graphify backend lives in `backend/` (the migrated engine); the scaffold only adds an optional structured-MAP stub + .gitignore entries. Derive / reconcile / view run through the backend subcommands (see the backend-subcommands section), always gated by the feature-detector - never inline here.
 - Do NOT hand-edit the templates during a run. Project values land via {{ var }} substitution only.
 - Do NOT author docs/ pages up front. That layer is authored on touch (or generated); the scaffold leaves docs/ empty.
 - `audit` is core and report-only: never route it through detect.py, and never "fix" its findings unasked.
