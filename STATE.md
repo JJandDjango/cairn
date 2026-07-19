@@ -2,9 +2,16 @@
 
 > **Contract** - one question: *what is in flight right now?*
 > <=1 page - regenerate at every session end - disposable, always safe to overwrite.
-> _Generated 2026-07-15._
+> _Generated 2026-07-19._
 
 ## Now
+- **PromptLang adopted for the skill prompt**
+  ([[0007-adopt-promptlang-for-the-skill-prompt]], branch
+  `feat/promptlang-adoption`, PR pending) - repo `prompt-lang.config.yaml`
+  claims `skills/*/SKILL.md` and registers the three section tags;
+  placeholders de-angled to brace form; batch gate `tests/test_promptlang.py`
+  (importorskip - the zero-dep contract holds). SKILL.md validates clean
+  (was 27 errors); suite 204 passing.
 - **PR #2 merged** (rebase) - the 1.1 living-system tier (`/cairn audit` +
   `/cairn maintain`, [[0006-automate-detection-not-authorship]]) is live on
   `main` at `94df71e`. Local checkout is back on `main`; the
@@ -26,8 +33,9 @@
 - None.
 
 ## Next actions
-1. **Stamp `v1.1.0`** in `.claude-plugin/plugin.json` when ready to release (the
-   open ROADMAP 1.1 gate) - goes via branch + PR; main requires PR.
+1. **Merge the PromptLang-adoption PR** (`feat/promptlang-adoption`) after
+   review - main requires PR. (`v1.1.0` is stamped and on main; that gate is
+   closed.)
 2. **Cut the 1.2 conventions branch** when ready - ROADMAP's gate list is the
    spec; the ADR is the first gate. Sequencing vs the public flip is the
    maintainer's call.
