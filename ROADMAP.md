@@ -74,7 +74,7 @@ Flip from personal to distributable (the standalone invariants held since 1.0 ma
 this a flip, not a rewrite).
 
 - [x] **GitHub remote** + `marketplace.json` validated + `plugin.json` complete.
-      *(remote exists — private; manifests validated + completed. Public flip is the `Publish` gate below.)*
+      *(public at `github.com/JJandDjango/cairn`, `main` PR-protected; manifests validated + completed.)*
 - [ ] **Stranger onboarding** - quickstart hardened for someone who has never seen
       Cairn.
 - [ ] **Publish** to the plugin marketplace.

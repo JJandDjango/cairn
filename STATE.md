@@ -5,43 +5,32 @@
 > _Generated 2026-07-19._
 
 ## Now
-- **PromptLang adopted for the skill prompt**
-  ([[0007-adopt-promptlang-for-the-skill-prompt]], branch
-  `feat/promptlang-adoption`, PR pending) - repo `prompt-lang.config.yaml`
-  claims `skills/*/SKILL.md` and registers the three section tags;
-  placeholders de-angled to brace form; batch gate `tests/test_promptlang.py`
-  (importorskip - the zero-dep contract holds). SKILL.md validates clean
-  (was 27 errors); suite 204 passing.
-- **PR #2 merged** (rebase) - the 1.1 living-system tier (`/cairn audit` +
-  `/cairn maintain`, [[0006-automate-detection-not-authorship]]) is live on
-  `main` at `94df71e`. Local checkout is back on `main`; the
-  `add-audit-maintain` branch is deleted (local + remote). Suite unchanged at
-  **203 passing** as of the merge.
-- **Conventions direction recorded** - normative "how we do things here" rules
-  (e.g. "no nested ternaries") get a proposed **sixth stratum**: a hand-edited,
-  top-level `CONVENTIONS.md` holding the *current* rule set, significant entries
-  backed by ADRs (the why-history). Recorded as ROADMAP
-  `1.2 - the conventions stratum (proposed)` with its gate list; the ADR lands
-  with the build, not before.
-- **Skill install is now a junction** - `~/.claude/skills/cairn` ->
-  `E:\cairn\skills\cairn`, replacing a stale 1.0 file copy. The repo working
-  tree IS the live skill in every session (feature branches included - by
-  design, for dogfooding). Remove the junction before the publish gate's
-  marketplace install-test, or the names collide.
+- **CI wired** (this PR): `.github/workflows/ci.yml` runs the suite on
+  ubuntu+windows (py 3.12) and installs foundations from its now-public
+  repo, so the `tests/test_promptlang.py` importorskip gate is *enforced*
+  in CI instead of skipping (204 expected green). CONTRIBUTING's "once CI
+  is wired up, it must be green" is now live.
+- **PromptLang adoption is merged** - ADR-0007 landed on `main` at
+  `d782165` (repo `prompt-lang.config.yaml` claims `skills/*/SKILL.md`;
+  SKILL.md validates clean; suite 204). The prior STATE's "PR pending" is
+  stale history.
+- **ROADMAP post-1.0 remote line fixed** (was "remote exists - private";
+  cairn has been public with PR-protected main since the #166 publish).
+- **Skill install is a junction** - `~/.claude/skills/cairn` ->
+  `E:\cairn\skills\cairn`; the repo working tree IS the live skill.
+  Remove the junction before the publish gate's marketplace install-test,
+  or the names collide.
 
 ## Blockers
 - None.
 
 ## Next actions
-1. **Merge the PromptLang-adoption PR** (`feat/promptlang-adoption`) after
-   review - main requires PR. (`v1.1.0` is stamped and on main; that gate is
-   closed.)
-2. **Cut the 1.2 conventions branch** when ready - ROADMAP's gate list is the
-   spec; the ADR is the first gate. Sequencing vs the public flip is the
-   maintainer's call.
-3. **Publish** *(HELD - explicit go required)*: stranger-onboarding hardening,
-   then flip public + marketplace add + install-test (junction removed first).
-4. Optional tidy: rename the `_v0` suffix on the functional contract tests.
+1. **Publish** *(HELD - explicit go required)*: stranger-onboarding
+   hardening, then marketplace add + install-test (junction removed first).
+2. **Cut the 1.2 conventions branch** when ready - ROADMAP's gate list is
+   the spec; the ADR is the first gate.
+3. Optional: add `required_status_checks` (the new CI) to the protect-main
+   ruleset; rename the `_v0` suffix on the functional contract tests.
 
 ## Open questions
 - None.
