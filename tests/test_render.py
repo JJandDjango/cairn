@@ -78,3 +78,31 @@ def test_invalid_backend_value_rejected(tmp_path):
     import pytest
     with pytest.raises(ValueError):
         _render(tmp_path, project_type="code", backend="bogus")
+
+
+def test_conventions_rendered_with_live_rule(tmp_path):
+    conv = (_render(tmp_path) / "CONVENTIONS.md").read_text(encoding="utf-8")
+    assert conv.startswith("# Conventions - demo")
+    assert "*how do we do things here?*" in conv
+    # The one live starter rule links the seed ADR, which the same scaffold
+    # renders - so a fresh spine passes the audit link check by construction.
+    assert "[[0001-record-architecture-decisions]]" in conv
+
+
+def test_conventions_example_matches_project_type(tmp_path):
+    for i, (ptype, marker) in enumerate([
+        ("code", "Match the idiom"),
+        ("novel", "Tense and POV hold"),
+        ("content-site", "One voice"),
+        ("business", "Decisions have owners"),
+        ("research", "Claims cite methods"),
+    ]):
+        conv = (_render(tmp_path / str(i), project_type=ptype)
+                / "CONVENTIONS.md").read_text(encoding="utf-8")
+        assert marker in conv
+
+
+def test_conventions_no_clobber(tmp_path):
+    (tmp_path / "CONVENTIONS.md").write_text("mine\n", encoding="utf-8")
+    _render(tmp_path)
+    assert (tmp_path / "CONVENTIONS.md").read_text(encoding="utf-8") == "mine\n"

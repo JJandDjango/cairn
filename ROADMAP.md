@@ -57,7 +57,7 @@ maintainer's call. Gates:
       question *"how do we do things here?"*, size budget, trigger =
       adopt / revise / retire a rule, mode = hand-edited (entries link ADRs)
       ([[0008-conventions-sixth-stratum]]).
-- [ ] **Template + render wiring** - `CONVENTIONS.md` scaffolded for all
+- [x] **Template + render wiring** - `CONVENTIONS.md` scaffolded for all
       project types, no-clobber, type-specific rule examples.
 - [ ] **Audit extended** - budget check + entry ADR links resolve + flag
       entries citing superseded ADRs; an absent file stays clean (opt-in for

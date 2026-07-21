@@ -1,6 +1,6 @@
 """Render the Cairn documentation spine into a project directory.
 
-Cairn lays down a pace-layered documentation spine — five strata, each under a
+Cairn lays down a pace-layered documentation spine — six strata, each under a
 fixed contract (one question / size budget / update trigger / maintenance mode) —
 for any project, code or not. Zero third-party dependencies.
 
@@ -41,6 +41,7 @@ TEMPLATE_TO_TARGET = {
     "THEORY.md.template": "THEORY.md",
     "MAP.md.template": "MAP.md",
     "STATE.md.template": "STATE.md",
+    "CONVENTIONS.md.template": "CONVENTIONS.md",
     "DOCS-SYSTEM.md.template": "DOCS-SYSTEM.md",
     "decisions/0001-record-architecture-decisions.md.template": "decisions/0001-record-architecture-decisions.md",
     "decisions/ADR-template.md.template": "decisions/ADR-template.md",
@@ -57,6 +58,15 @@ COMPONENT_UNIT = {
     "content-site": ("Section", "Sections"),
     "business": ("Workstream", "Workstreams"),
     "research": ("Claim", "Claims"),
+}
+
+# project_type -> one starter-rule example rendered (commented) into CONVENTIONS.md.
+CONVENTIONS_EXAMPLE = {
+    "code": "- **Match the idiom.** New code follows the touched layer's dominant pattern.",
+    "novel": "- **Tense and POV hold.** One narrative voice; a break is a marked choice.",
+    "content-site": "- **One voice.** Active voice, second person, no unexplained jargon.",
+    "business": "- **Decisions have owners.** Every decision names one accountable owner.",
+    "research": "- **Claims cite methods.** No claim without the method and data behind it.",
 }
 
 # .gitignore entries added ONLY when the graphify backend is chosen.
@@ -193,6 +203,7 @@ def build_var_dict(answers: dict, today: str) -> dict:
         "project_type": project_type,
         "component_unit_col": unit_col,
         "component_unit_plural": unit_plural,
+        "conventions_example": CONVENTIONS_EXAMPLE[project_type],
         "diagram_note": diagram_note,
         "map_mode": map_mode,
         "map_structured_stub": map_structured_stub,
