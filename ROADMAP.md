@@ -5,7 +5,7 @@ and the invariants; this file holds the *sequence and the gates*. Direction: a
 focused, standalone, zero-dependency **living** documentation system - built for
 the author now, public-ready later.
 
-**Current:** `v1.1.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
+**Current:** `v1.2.0` (per `.claude-plugin/plugin.json`), functional, MIT. Cairn's
 own spine is present (this repo dogfoods itself) and standalone - code, tests, and
 docs carry no knowledge of any external tool. See `STATE.md` for what's in flight.
 
@@ -44,14 +44,13 @@ Automate the *detection* half of day-2 upkeep; authorship stays human-reviewed
 - [x] **Version stamped `1.1.0`** - `.claude-plugin/plugin.json` (stamped
       2026-07-15 on the user's release call).
 
-## 1.2 - the conventions stratum (proposed)
+## 1.2 - the conventions stratum
 
 Give normative "how we do things here" rules a home the five strata don't own:
 a hand-edited, top-level `CONVENTIONS.md` holding the *current* rule set, with
 significant entries backed by an ADR (the why-history). Generalizes across
 project types (code -> coding rules, novel -> style rules, research ->
-methodology). Unscheduled - sequencing against the public flip is the
-maintainer's call. Gates:
+methodology). Gates:
 
 - [x] **ADR recorded** - the sixth-stratum decision, with the contract row:
       question *"how do we do things here?"*, size budget, trigger =
@@ -66,8 +65,8 @@ maintainer's call. Gates:
       authorship is human-owned.
 - [x] **Docs sweep** - five -> six strata across DOCS-SYSTEM (repo + template),
       USAGE, README, MAP's templates row.
-- [ ] **Dogfooded + stamped** - cairn's own `CONVENTIONS.md` authored; version
-      `1.2.0`.
+- [x] **Dogfooded + stamped** - cairn's own `CONVENTIONS.md` authored; version
+      `1.2.0` (stamped 2026-07-21).
 
 ## Post-1.0 - public
 
