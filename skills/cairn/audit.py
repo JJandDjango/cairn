@@ -29,9 +29,15 @@ Finding codes:
                    carrying a "superseded by" mark is INFO - the one sanctioned edit)
   ADR-DUP          two ADRs share a number
   ADR-SUPERSEDE    "superseded by NNNN" references a missing ADR
-  INFERRED-TAG     THEORY.md still carries an "(inferred)" intent tag
+  INFERRED-TAG     THEORY.md intent or CONVENTIONS.md entries still carry an
+                   "(inferred)" tag (text inside HTML comments does not count)
+  CONV-LINK        a CONVENTIONS.md entry cites an ADR that does not exist
+  CONV-SUPERSEDED  a CONVENTIONS.md entry cites a superseded ADR
   DOCS-STALE       a docs/ page is older than a file its covers-marker names;
                    pages without a marker are one aggregate INFO
+
+CONVENTIONS.md itself is optional (pre-1.2 spines): absent means no findings;
+present means the full contract is enforced.
 
 The covers marker (optional, per docs/ page):  <!-- covers: path, dir/, glob* -->
 declares which files a page explains, so staleness is checkable.
@@ -104,7 +110,9 @@ def _file_date(cwd: Path, p: Path, use_git: bool) -> str:
 
 def _spine_md_files(cwd: Path) -> list[Path]:
     """Every markdown file the strata own (top files + decisions/ + docs/)."""
-    files = [cwd / n for n in ("THEORY.md", "MAP.md", "STATE.md", "DOCS-SYSTEM.md")
+    files = [cwd / n
+             for n in ("THEORY.md", "MAP.md", "STATE.md", "CONVENTIONS.md",
+                       "DOCS-SYSTEM.md")
              if (cwd / n).is_file()]
     for d in ("decisions", "docs"):
         if (cwd / d).is_dir():
@@ -121,6 +129,13 @@ def _adr_files(cwd: Path) -> list[Path]:
 
 def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8")
+
+
+def _visible(text: str) -> str:
+    """Text with HTML comments removed. Conventions-facing checks use this so
+    template guidance may NAME the inferred tag, and a commented-out entry
+    neither link-checks nor flags."""
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
 # ------------------------------------------------------------------- checks
@@ -226,6 +241,7 @@ def check_budgets(cwd: Path) -> list[Finding]:
         ("THEORY.md", LINES_PER_PAGE, "BUDGET-THEORY", "1 page"),
         ("MAP.md", 2 * LINES_PER_PAGE, "BUDGET-MAP", "2 pages"),
         ("STATE.md", LINES_PER_PAGE, "BUDGET-STATE", "1 page"),
+        ("CONVENTIONS.md", LINES_PER_PAGE, "BUDGET-CONVENTIONS", "1 page"),
     ]
     for name, limit, code, label in budgets:
         p = cwd / name
@@ -315,12 +331,59 @@ def check_adrs(cwd: Path, use_git: bool) -> list[Finding]:
 
 
 def check_inferred(cwd: Path) -> list[Finding]:
-    theory = cwd / "THEORY.md"
-    if theory.is_file() and "(inferred" in _read(theory):
-        return [Finding("WARN", "INFERRED-TAG",
-                        "intent still tagged '(inferred)' - confirm it and delete the tag",
-                        "THEORY.md")]
-    return []
+    findings = []
+    for name, what in (("THEORY.md", "intent"), ("CONVENTIONS.md", "entries")):
+        p = cwd / name
+        if p.is_file() and "(inferred" in _visible(_read(p)):
+            findings.append(Finding("WARN", "INFERRED-TAG",
+                                    f"{what} still tagged '(inferred)' - confirm and "
+                                    f"delete the tag", name))
+    return findings
+
+
+def check_conventions(cwd: Path) -> list[Finding]:
+    """CONVENTIONS.md entry links: cited ADRs must exist and be current.
+    The file itself is optional (pre-1.2 spines) - absent means no findings."""
+    conv = cwd / "CONVENTIONS.md"
+    if not conv.is_file():
+        return []
+    findings: list[Finding] = []
+    text = _visible(_read(conv))
+
+    adr_numbers: dict[int, Path] = {}
+    for adr in _adr_files(cwd):
+        m = re.match(r"(\d{1,4})-", adr.name)
+        if m:
+            adr_numbers.setdefault(int(m.group(1)), adr)
+
+    cited: dict[int, str] = {}
+    for m in re.finditer(r"\[\[(\d{1,4})-[^\]]*\]\]", text):
+        cited.setdefault(int(m.group(1)), m.group(0))
+    for m in re.finditer(r"decisions/(\d{1,4})[\w.-]*\.md", text):
+        cited.setdefault(int(m.group(1)), m.group(0))
+
+    for num, ref in sorted(cited.items()):
+        adr = adr_numbers.get(num)
+        if adr is None:
+            findings.append(Finding("ERROR", "CONV-LINK",
+                                    f"entry cites '{ref}' but no ADR {num:04d} exists",
+                                    "CONVENTIONS.md"))
+        elif re.search(r"superseded by[ :#]*\d", _read(adr), re.IGNORECASE):
+            findings.append(Finding("WARN", "CONV-SUPERSEDED",
+                                    f"entry cites {adr.name} which is superseded - "
+                                    f"revise or retire the rule",
+                                    "CONVENTIONS.md"))
+    return findings
+
+
+def _conventions_doc_refs(cwd: Path) -> set[str]:
+    """Doc pages CONVENTIONS.md references (lowercased posix rels) - overflow
+    pages under docs/conventions/ are referenced, not orphans."""
+    conv = cwd / "CONVENTIONS.md"
+    if not conv.is_file():
+        return set()
+    return {t.replace("\\", "/").lower()
+            for t in re.findall(r"[\w./\\-]+\.md", _visible(_read(conv)))}
 
 
 def _expand_covers_token(cwd: Path, token: str) -> list[Path]:
@@ -400,12 +463,13 @@ def run_audit(cwd: Path) -> list[Finding]:
     findings += check_spine_presence(cwd)
     map_findings, referenced = check_map_doc_links(cwd)
     findings += map_findings
-    findings += check_docs_orphans(cwd, referenced)
+    findings += check_docs_orphans(cwd, referenced | _conventions_doc_refs(cwd))
     findings += check_diagrams(cwd)
     findings += check_budgets(cwd)
     findings += check_state_freshness(cwd, use_git)
     findings += check_adrs(cwd, use_git)
     findings += check_inferred(cwd)
+    findings += check_conventions(cwd)
     findings += check_docs_staleness(cwd, use_git)
     findings.sort(key=lambda f: (SEVERITY_RANK[f.severity], f.code, f.path, f.message))
     return findings

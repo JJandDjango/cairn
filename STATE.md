@@ -2,34 +2,34 @@
 
 > **Contract** - one question: *what is in flight right now?*
 > <=1 page - regenerate at every session end - disposable, always safe to overwrite.
-> _Generated 2026-07-19._
+> _Generated 2026-07-21._
 
 ## Now
-- **CI wired** (this PR): `.github/workflows/ci.yml` runs the suite on
-  ubuntu+windows (py 3.12) and installs foundations from its now-public
-  repo, so the `tests/test_promptlang.py` importorskip gate is *enforced*
-  in CI instead of skipping (204 expected green). CONTRIBUTING's "once CI
-  is wired up, it must be green" is now live.
-- **PromptLang adoption is merged** - ADR-0007 landed on `main` at
-  `d782165` (repo `prompt-lang.config.yaml` claims `skills/*/SKILL.md`;
-  SKILL.md validates clean; suite 204). The prior STATE's "PR pending" is
-  stale history.
-- **ROADMAP post-1.0 remote line fixed** (was "remote exists - private";
-  cairn has been public with PR-protected main since the #166 publish).
+- **1.2 (conventions stratum) is EXECUTED on `conventions-1.2`** - all six
+  ROADMAP gates in six commits (ADR 0008 -> template/render -> audit
+  extension -> skill/maintain hands-off -> docs sweep five->six -> dogfood +
+  `1.2.0` stamp). Suite 213 green (204 + 9 new). Branch is local,
+  **not yet pushed** - main still shows v1.1.0 until the PR merges.
+- **Cairn now dogfoods its own sixth stratum** - `CONVENTIONS.md` authored
+  (11 rules, all ADR links current); audit's new CONV checks pass on it.
+- **Known accepted finding**: `BUDGET-ADR` WARN on `decisions/0007` (43 > 40
+  lines, pre-existing since #174). Both fixes are worse than the scar -
+  trimming trips append-only ADR-EDITED forever; superseding over 3 lines is
+  noise. Accepted as-is; audit exits 1 on this alone.
 - **Skill install is a junction** - `~/.claude/skills/cairn` ->
-  `E:\cairn\skills\cairn`; the repo working tree IS the live skill.
-  Remove the junction before the publish gate's marketplace install-test,
-  or the names collide.
+  `E:\cairn\skills\cairn`; the working tree IS the live skill, so this
+  branch's skill changes are already live locally. Remove the junction
+  before the publish gate's marketplace install-test.
 
 ## Blockers
 - None.
 
 ## Next actions
-1. **Publish** *(HELD - explicit go required)*: stranger-onboarding
+1. **Push `conventions-1.2` + open the PR** (main is PR-protected); merge on
+   CI green (ubuntu+windows suite + PromptLang gate).
+2. **Publish** *(HELD - explicit go required)*: stranger-onboarding
    hardening, then marketplace add + install-test (junction removed first).
-2. **Cut the 1.2 conventions branch** when ready - ROADMAP's gate list is
-   the spec; the ADR is the first gate.
-3. Optional: add `required_status_checks` (the new CI) to the protect-main
+3. Optional carry-overs: `required_status_checks` on the protect-main
    ruleset; rename the `_v0` suffix on the functional contract tests.
 
 ## Open questions

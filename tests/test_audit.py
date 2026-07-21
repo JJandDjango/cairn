@@ -154,6 +154,76 @@ def test_duplicate_adr_number_is_an_error(tmp_path):
     assert "ADR-DUP" in _actionable(audit.run_audit(root))
 
 
+# ------------------------------------------------------- CONVENTIONS stratum
+
+def test_conventions_absent_is_clean(tmp_path):
+    # Pre-1.2 spines never scaffolded it: opt-in, zero findings of any kind.
+    root = _scaffold(tmp_path)
+    (root / "CONVENTIONS.md").unlink()
+    findings = audit.run_audit(root)
+    assert _actionable(findings) == []
+    assert not [f for f in findings if f.code.startswith("CONV")]
+
+
+def test_conventions_over_one_page_warns(tmp_path):
+    root = _scaffold(tmp_path)
+    conv = root / "CONVENTIONS.md"
+    conv.write_text(conv.read_text(encoding="utf-8") + "- rule\n" * 100,
+                    encoding="utf-8")
+    assert "BUDGET-CONVENTIONS" in _actionable(audit.run_audit(root))
+
+
+def test_conventions_citing_missing_adr_is_an_error(tmp_path):
+    root = _scaffold(tmp_path)
+    conv = root / "CONVENTIONS.md"
+    conv.write_text(conv.read_text(encoding="utf-8")
+                    + "- **Ghost.** Cites nothing real ([[0999-ghost]]).\n",
+                    encoding="utf-8")
+    findings = audit.run_audit(root)
+    assert any(f.code == "CONV-LINK" and f.severity == "ERROR" for f in findings)
+
+
+def test_conventions_citing_superseded_adr_warns(tmp_path):
+    root = _scaffold(tmp_path)
+    (root / "decisions" / "0002-old-way.md").write_text(
+        "# 2. Old way\n\nStatus: superseded by 0003\n", encoding="utf-8")
+    (root / "decisions" / "0003-new-way.md").write_text(
+        "# 3. New way\n\nStatus: accepted\n", encoding="utf-8")
+    conv = root / "CONVENTIONS.md"
+    conv.write_text(conv.read_text(encoding="utf-8")
+                    + "- **Old rule.** Do it the old way ([[0002-old-way]]).\n",
+                    encoding="utf-8")
+    findings = audit.run_audit(root)
+    assert any(f.code == "CONV-SUPERSEDED" and f.severity == "WARN"
+               for f in findings)
+    assert "CONV-LINK" not in [f.code for f in findings]
+
+
+def test_conventions_inferred_entry_flags_but_template_comment_does_not(tmp_path):
+    root = _scaffold(tmp_path)
+    # The scaffolded template NAMES the tag inside a guidance comment - that
+    # must stay invisible; only a real (uncommented) entry flags.
+    assert "INFERRED-TAG" not in _actionable(audit.run_audit(root))
+    conv = root / "CONVENTIONS.md"
+    conv.write_text(conv.read_text(encoding="utf-8")
+                    + "- **Mined rule.** Looks true here. (inferred - confirm)\n",
+                    encoding="utf-8")
+    tags = [f for f in audit.run_audit(root) if f.code == "INFERRED-TAG"]
+    assert [f.path for f in tags] == ["CONVENTIONS.md"]
+
+
+def test_conventions_doc_link_suppresses_orphan(tmp_path):
+    root = _scaffold(tmp_path)
+    (root / "docs" / "conventions").mkdir(parents=True)
+    (root / "docs" / "conventions" / "naming.md").write_text(
+        "# naming\n", encoding="utf-8")
+    conv = root / "CONVENTIONS.md"
+    conv.write_text(conv.read_text(encoding="utf-8")
+                    + "- **Names.** See docs/conventions/naming.md.\n",
+                    encoding="utf-8")
+    assert "DOCS-ORPHAN" not in [f.code for f in audit.run_audit(root)]
+
+
 # ----------------------------------------------------------- STATE freshness
 
 def test_backdated_state_stamp_warns_via_mtime_path(tmp_path):

@@ -6,13 +6,13 @@ A cairn is a stack of stones that marks a trail: built up over time, each stone
 added but never moved, so the next traveler finds the way. Your project's docs,
 exactly — **append-only, pace-layered, for wayfinding.**
 
-Cairn scaffolds a **pace-layered** documentation spine: five files, each changing
+Cairn scaffolds a **pace-layered** documentation spine: six files, each changing
 at its own rate under a fixed contract, so fast edits never tear slow truth.
 
 > **Want to use it? → [USAGE.md](USAGE.md)** — the explicit step-by-step guide:
 > invoke → interview (answer-by-answer) → outputs → day-2 workflow → worked example.
 
-## The five strata
+## The six strata
 
 | Stratum | Question it answers | Budget | Update trigger | Mode |
 |---|---|---|---|---|
@@ -21,6 +21,7 @@ at its own rate under a fixed contract, so fast edits never tear slow truth.
 | `decisions/` | Why done this way? | ≤½ page each | a new significant decision | append-only, never edited |
 | `docs/` | How does each piece work? | mirrors structure | internals change | authored on touch (or generated) |
 | `STATE.md` | What's in flight now? | ≤1 page | every session end | regenerated, disposable |
+| `CONVENTIONS.md` | How do we do things here? | ≤1 page | a rule is adopted / revised / retired | hand-edited (entries link ADRs) |
 
 Read `THEORY.md → MAP.md → STATE.md` (~2–3k tokens) and you know *what, how, and
 where*. Descend into `decisions/` and `docs/` only on demand.
@@ -95,7 +96,7 @@ projects of any kind.
 skills/cairn/
 ├─ SKILL.md            # the /cairn interview
 ├─ render.py           # zero-dependency renderer (also runnable standalone)
-└─ templates/          # the five strata + DOCS-SYSTEM.md + ADR seed & template
+└─ templates/          # the six strata + DOCS-SYSTEM.md + ADR seed & template
 ```
 
 ## License
