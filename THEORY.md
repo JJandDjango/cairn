@@ -54,5 +54,5 @@ codebase or a novel alike.
   spine* generalizes; derived and automated features are code-only and stay
   optional. Cairn is strongest on code and knowledge work.
 - **Not a content author.** Cairn scaffolds frames and records decisions; it does
-  not write your docs for you. The lone exception - a brownfield intent line - is
-  inferred and tagged for correction.
+  not write your docs for you. The only exceptions - a brownfield intent line and
+  brownfield conventions starters - are inferred and tagged for correction.

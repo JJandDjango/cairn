@@ -53,9 +53,10 @@ project types (code -> coding rules, novel -> style rules, research ->
 methodology). Unscheduled - sequencing against the public flip is the
 maintainer's call. Gates:
 
-- [ ] **ADR recorded** - the sixth-stratum decision, with the contract row:
+- [x] **ADR recorded** - the sixth-stratum decision, with the contract row:
       question *"how do we do things here?"*, size budget, trigger =
-      adopt / revise / retire a rule, mode = hand-edited (entries link ADRs).
+      adopt / revise / retire a rule, mode = hand-edited (entries link ADRs)
+      ([[0008-conventions-sixth-stratum]]).
 - [ ] **Template + render wiring** - `CONVENTIONS.md` scaffolded for all
       project types, no-clobber, type-specific rule examples.
 - [ ] **Audit extended** - budget check + entry ADR links resolve + flag
