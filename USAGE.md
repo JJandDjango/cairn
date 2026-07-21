@@ -1,10 +1,10 @@
 # Using Cairn
 
-Cairn lays down a **five-file documentation spine** for a project and gives you a
+Cairn lays down a **six-file documentation spine** for a project and gives you a
 fixed routine for keeping it alive. This is the explicit, step-by-step guide;
 `README.md` is the short overview.
 
-**The whole idea in one sentence:** each of the five files answers exactly one
+**The whole idea in one sentence:** each of the six files answers exactly one
 question and changes at its own pace, so you always know which file to touch, and
 you never maintain more than the moment requires.
 
@@ -88,6 +88,7 @@ Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn    # Windows
 THEORY.md          why it exists + what must stay true         (read 1st)
 MAP.md             the pieces + how they connect               (read 2nd)
 STATE.md           what's in flight right now                  (read 3rd)
+CONVENTIONS.md     how we do things here — one line per rule   (seeded)
 decisions/
   0001-record-architecture-decisions.md    the seed ADR
   ADR-template.md                           copy this for each new decision
@@ -116,6 +117,7 @@ only then.
 | `decisions/` | you make a choice a future you would question | Copy `ADR-template.md` → `NNNN-short-title.md`; fill Context / Decision / Consequences. **Never edit an old ADR** — supersede it (mark the old one `superseded by NNNN`). |
 | `docs/<piece>.md` | you first work on a piece in depth | Author the page then, not upfront. |
 | `STATE.md` | end of every work session | Overwrite it freely — it's disposable, your running handoff. |
+| `CONVENTIONS.md` | you adopt / revise / retire a house rule | One line per rule, ADR-linked when significant; detail overflows to `docs/conventions/`. |
 
 If you remember only one rule: **decisions are append-only, and `STATE.md` is
 throwaway.** Everything else is edited in place, rarely.
@@ -125,7 +127,8 @@ throwaway.** Everything else is edited in place, rarely.
 Detection is automated; authorship stays yours (reviewed at commit):
 
 - **`/cairn audit`** — the §7 checklist, executable. Flags broken MAP→docs
-  links, budget overruns, lingering `(inferred)` tags, edited ADRs and dangling
+  links, budget overruns, lingering `(inferred)` tags, conventions entries
+  citing missing or superseded ADRs, edited ADRs and dangling
   supersedes, a stale `STATE.md` stamp, and stale docs pages (declare what a
   page explains with `<!-- covers: paths -->` and staleness becomes checkable).
   Report-only — it never writes. Exit 0 clean / 1 findings / 2 no spine. Also
@@ -133,7 +136,8 @@ Detection is automated; authorship stays yours (reviewed at commit):
 - **`/cairn maintain`** — session end, one command: your agent runs audit, does
   the MAP-row and docs-page touches for what the session *actually* changed,
   regenerates `STATE.md`, re-audits, and leaves every edit uncommitted for your
-  review. `THEORY.md` and old ADRs are never machine-touched — only flagged.
+  review. `THEORY.md`, `CONVENTIONS.md`, and old ADRs are never
+  machine-touched — only flagged.
 
 ---
 
@@ -148,14 +152,17 @@ Detection is automated; authorship stays yours (reviewed at commit):
 ```
 
 Cairn writes `THEORY.md`, `MAP.md` (with a **Chapters** table, no diagram),
-`STATE.md`, the seed ADR, and `DOCS-SYSTEM.md`. Then you:
+`STATE.md`, `CONVENTIONS.md` (one starter rule + a novel-flavored example), the
+seed ADR, and `DOCS-SYSTEM.md`. Then you:
 
 1. Fill `THEORY.md` **Invariants** ("stays in 1863; surgeon's POV only") and
    **Non-goals** ("not a battlefield-tactics manual").
 2. Add rows to `MAP.md`'s Chapters table as you outline.
 3. When you settle a structural choice — say, present tense throughout — copy
    `ADR-template.md` to `decisions/0002-present-tense.md` and record why.
-4. End each writing session by overwriting `STATE.md` (Now / Blockers / Next /
+4. Adopt it as a house rule — one line in `CONVENTIONS.md` linking
+   `[[0002-present-tense]]`.
+5. End each writing session by overwriting `STATE.md` (Now / Blockers / Next /
    Open questions).
 
 Swap "Chapters" for "Components" and it's the identical routine for a codebase.
@@ -169,10 +176,13 @@ checklist (`/cairn audit` checks it mechanically):
 
 - [ ] ADRs are never edited; superseding records exist where decisions changed.
 - [ ] Exactly one diagram in the project, in `MAP.md`.
-- [ ] Size budgets held — THEORY ≤1p · MAP ≤2p · ADR ≤½p · STATE ≤1p.
+- [ ] Size budgets held — THEORY ≤1p · MAP ≤2p · ADR ≤½p · STATE ≤1p ·
+      CONVENTIONS ≤1p.
 - [ ] `STATE.md` regenerated at session end, not hand-patched mid-session.
 - [ ] Every `MAP.md` row links a `docs/` page or is marked "no doc yet".
-- [ ] No lingering `(inferred)` tags in `THEORY.md`.
+- [ ] No lingering `(inferred)` tags in `THEORY.md` or `CONVENTIONS.md`.
+- [ ] Every `CONVENTIONS.md` entry's ADR link resolves to a current (not
+      superseded) ADR.
 
 ---
 

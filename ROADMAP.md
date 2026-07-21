@@ -64,7 +64,7 @@ maintainer's call. Gates:
       pre-1.2 spines).
 - [x] **Maintain stays hands-off** - CONVENTIONS is flag-only like THEORY;
       authorship is human-owned.
-- [ ] **Docs sweep** - five -> six strata across DOCS-SYSTEM (repo + template),
+- [x] **Docs sweep** - five -> six strata across DOCS-SYSTEM (repo + template),
       USAGE, README, MAP's templates row.
 - [ ] **Dogfooded + stamped** - cairn's own `CONVENTIONS.md` authored; version
       `1.2.0`.

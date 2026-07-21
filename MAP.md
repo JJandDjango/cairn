@@ -7,7 +7,7 @@
 ```mermaid
 flowchart TD
     U[/cairn skill - SKILL.md/] --> R[render.py - zero-dep core]
-    R --> T[templates/ - the five strata]
+    R --> T[templates/ - the six strata]
     U --> A[audit.py - day-2 spine checker]
     U -. backend subcommand .-> D[detect.py - dependency gate]
     D -. only if available .-> B[backend/ - OPTIONAL graphify integration]
@@ -23,9 +23,9 @@ flowchart TD
 ### Core - zero-dependency
 | Component | Responsibility (one line) | Status | Deep doc |
 |---|---|---|---|
-| `render.py` | Substitute the five templates into a project (no-clobber, date-stamped). The whole core engine. | stable | USAGE.md |
+| `render.py` | Substitute the six-strata templates into a project (no-clobber, date-stamped). The whole core engine. | stable | USAGE.md |
 | `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). | stable | `docs/audit.md` |
-| `templates/` | The five strata + DOCS-SYSTEM + seed ADR & ADR-template, with `{{ var }}` slots. | stable | DOCS-SYSTEM.md |
+| `templates/` | The six strata + DOCS-SYSTEM + seed ADR & ADR-template, with `{{ var }}` slots. | stable | DOCS-SYSTEM.md |
 | `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) and backend subcommands. | stable | no doc yet |
 | `prompt-lang.config.yaml` | PromptLang claim for the skill prompt - registers its section tags; write-time hook + `tests/test_promptlang.py` enforce ([[0007-adopt-promptlang-for-the-skill-prompt]]). | stable | no doc yet |
 | `detect.py` | Feature-detector that gates the optional backend (absent deps report cleanly, never crash). | stable | no doc yet |
