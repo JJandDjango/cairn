@@ -62,7 +62,7 @@ maintainer's call. Gates:
 - [x] **Audit extended** - budget check + entry ADR links resolve + flag
       entries citing superseded ADRs; an absent file stays clean (opt-in for
       pre-1.2 spines).
-- [ ] **Maintain stays hands-off** - CONVENTIONS is flag-only like THEORY;
+- [x] **Maintain stays hands-off** - CONVENTIONS is flag-only like THEORY;
       authorship is human-owned.
 - [ ] **Docs sweep** - five -> six strata across DOCS-SYSTEM (repo + template),
       USAGE, README, MAP's templates row.

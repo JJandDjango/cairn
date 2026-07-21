@@ -1,13 +1,13 @@
 ---
 name: cairn
-description: Scaffold a durable, pace-layered documentation spine into any project - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and (for code) an optional graphify backend, then renders five strata - THEORY.md (why), MAP.md (structure), decisions/ (append-only ADRs), docs/ (detail), STATE.md (in-flight) - each under a fixed one-question contract, plus a DOCS-SYSTEM.md audit checklist. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only spine checker) and `/cairn maintain` (session-end routine - audit, touch MAP/docs for what changed, regenerate STATE). Use when starting, standardizing, or maintaining a project's documentation.
+description: Scaffold a durable, pace-layered documentation spine into any project - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and (for code) an optional graphify backend, then renders six strata - THEORY.md (why), MAP.md (structure), decisions/ (append-only ADRs), docs/ (detail), STATE.md (in-flight), CONVENTIONS.md (house rules) - each under a fixed one-question contract, plus a DOCS-SYSTEM.md audit checklist. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only spine checker) and `/cairn maintain` (session-end routine - audit, touch MAP/docs for what changed, regenerate STATE). Use when starting, standardizing, or maintaining a project's documentation.
 ---
 
 # `/cairn` - scaffold a pace-layered documentation spine
 
 <purpose>
 Lay down a durable, portable documentation spine for any project - a codebase, a
-novel, a content site, a business, a research program. Cairn renders five
+novel, a content site, a business, a research program. Cairn renders six
 pace-layered strata (each changing at its own rate under a fixed contract) so
 that fast-moving notes never tear slow-moving truth, and a new reader (human or
 LLM) learns *what, how, and where* from THEORY.md + MAP.md + STATE.md in minutes.
@@ -26,7 +26,7 @@ novel or a business plan is a valid target. It detects a git root only to offer
 it, never to gate.
 
 Outputs (into the target dir; none overwritten if already present):
-  THEORY.md - MAP.md - STATE.md - DOCS-SYSTEM.md
+  THEORY.md - MAP.md - STATE.md - CONVENTIONS.md - DOCS-SYSTEM.md
   decisions/0001-record-architecture-decisions.md - decisions/ADR-template.md
   docs/.gitkeep
   .gitignore  (only when the graphify backend is chosen: + graphify-out/, /manifest.json)
@@ -71,8 +71,9 @@ Outputs (into the target dir; none overwritten if already present):
 7. REPORT the renderer's stdout (the created / skipped lines) plus next steps:
    "Fill in THEORY.md's invariants and MAP.md's component table; keep STATE.md as
    your session-end handoff; add an ADR (copy decisions/ADR-template.md) the next
-   time you make a decision a future session would question. See DOCS-SYSTEM.md for
-   the full contract + audit checklist." If backend == graphify, ALSO tell the user: "Run `/cairn derive` to build the structured MAP from the code graph, then `/cairn reconcile` to keep authored vs derived honest (needs graphify + PyYAML)." If render failed, REPORT the stderr and EXIT.
+   time you make a decision a future session would question; adopt house rules in
+   CONVENTIONS.md as they emerge - one line per rule, ADR-linked when
+   significant. See DOCS-SYSTEM.md for the full contract + audit checklist." If backend == graphify, ALSO tell the user: "Run `/cairn derive` to build the structured MAP from the code graph, then `/cairn reconcile` to keep authored vs derived honest (needs graphify + PyYAML)." If render failed, REPORT the stderr and EXIT.
 </instructions>
 
 <audit-subcommand>
@@ -107,12 +108,14 @@ session actually changed; every write lands uncommitted for the user's review.
 4. TOUCH docs/ - for each piece deeply worked this session, author or refresh
    its `docs/{piece}.md`, and set/refresh the page's `<!-- covers: ... -->`
    marker so future staleness stays checkable.
-5. FLAG the human-owned strata - NEVER edit THEORY.md or any existing
-   decisions/*.md. If the session's changes look purpose- or invariant-shaped,
-   TELL the user to hand-edit THEORY.md. If a change is decision-shaped (a
-   future session would ask "why is it done this way?"), ASK (AskUserQuestion)
-   whether to draft a new ADR from decisions/ADR-template.md; draft ONLY on an
-   explicit yes.
+5. FLAG the human-owned strata - NEVER edit THEORY.md, CONVENTIONS.md, or any
+   existing decisions/*.md. If the session's changes look purpose- or
+   invariant-shaped, TELL the user to hand-edit THEORY.md. If they look
+   rule-shaped (a new "how we do things here"), TELL the user to hand-edit
+   CONVENTIONS.md - adopt / revise / retire, ADR-linked when significant. If a
+   change is decision-shaped (a future session would ask "why is it done this
+   way?"), ASK (AskUserQuestion) whether to draft a new ADR from
+   decisions/ADR-template.md; draft ONLY on an explicit yes.
 6. REGENERATE STATE.md wholesale - Now / Blockers / Next actions / Open
    questions, stamped with today's date. Overwrite; never hand-patch.
 7. AUDIT (after) - one Bash call:
@@ -154,7 +157,7 @@ deriving / reconciling / viewing a structured MAP.
 - Do NOT hand-edit the templates during a run. Project values land via {{ var }} substitution only.
 - Do NOT author docs/ pages up front. That layer is authored on touch (or generated); the scaffold leaves docs/ empty.
 - `audit` is core and report-only: never route it through detect.py, and never "fix" its findings unasked.
-- `maintain` writes ONLY MAP.md, docs/, and STATE.md. THEORY.md and existing decisions/ records are flag-only; a new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
+- `maintain` writes ONLY MAP.md, docs/, and STATE.md. THEORY.md, CONVENTIONS.md, and existing decisions/ records are flag-only; a new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
 </constraints>
 
 <criteria>
@@ -167,5 +170,5 @@ deriving / reconciling / viewing a structured MAP.
 - [ ] Outcome + next-steps + DOCS-SYSTEM.md pointer reported to the user.
 - [ ] If invoked with a backend subcommand: detect.py gated it, then the launcher forwarded it (or a clean "unavailable" was reported) - the interview did NOT run.
 - [ ] If invoked as `audit`: audit.py ran by absolute path with no detect gate; findings reported verbatim; nothing was written.
-- [ ] If invoked as `maintain`: every touch grounded in observed changes; THEORY.md and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
+- [ ] If invoked as `maintain`: every touch grounded in observed changes; THEORY.md, CONVENTIONS.md, and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
 </criteria>
