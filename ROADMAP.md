@@ -59,7 +59,7 @@ maintainer's call. Gates:
       ([[0008-conventions-sixth-stratum]]).
 - [x] **Template + render wiring** - `CONVENTIONS.md` scaffolded for all
       project types, no-clobber, type-specific rule examples.
-- [ ] **Audit extended** - budget check + entry ADR links resolve + flag
+- [x] **Audit extended** - budget check + entry ADR links resolve + flag
       entries citing superseded ADRs; an absent file stays clean (opt-in for
       pre-1.2 spines).
 - [ ] **Maintain stays hands-off** - CONVENTIONS is flag-only like THEORY;
