@@ -37,7 +37,7 @@ Outputs (into the target dir; none overwritten if already present):
    - `audit` - CORE, zero-dep: go to the audit-subcommand section.
    - `maintain` - CORE, the session-end routine: go to the maintain-subcommand section.
    - `derive`, `reconcile` (or `refresh`), `view`, `stage`, `validate`, `vault-add` - OPTIONAL backend: go to the backend-subcommands section and forward the call.
-   Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7.
+   Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7. When the invocation text itself supplies interview answers (a charter- or script-driven run), treat them as interview-equivalent - steps 2-4 ask only for what is missing.
 
 1. CONFIRM the target directory. Default to cwd. Run `git rev-parse --show-toplevel` via Bash; if it succeeds and differs from cwd, ASK the user (AskUserQuestion) whether to target the git root or cwd. If it is not a git repo, that is fine - proceed with cwd. NEVER refuse for lack of git.
 
@@ -46,18 +46,18 @@ Outputs (into the target dir; none overwritten if already present):
 3. INTERVIEW batch - invoke AskUserQuestion with 3 questions in one call:
    - Q1 header "Project name": "Name for this project?" options: "Use cwd directory name" / "Use git remote name" (offer only if a remote exists) / Other.
    - Q2 header "Project type": "What kind of project is this? (sets the component unit)" options: "code" / "novel" / "content-site" / "business" / "research".
-   - Q3 header "Material": "Greenfield or brownfield?" options: "greenfield - author THEORY now" / "brownfield - infer and mark (inferred)".
+   - Q3 header "Adoption": "Greenfield or brownfield?" options: "greenfield - author THEORY now" / "brownfield - infer and mark (inferred)".
 
 4. CONDITIONAL backend question - ONLY if Q2 == "code": invoke AskUserQuestion with 1 question:
    - header "Backend": "Optional derived backend for the MAP layer?" options: "none - zero-dependency authored markdown (Recommended)" / "graphify - structured MAP derived + reconciled from the code graph (needs graphify + PyYAML)".
    For any non-code project type, set backend = "none" WITHOUT asking.
 
-5. PARSE answers into a JSON dict with keys project_name, intent, project_type, backend, material:
+5. PARSE answers into a JSON dict with keys project_name, intent, project_type, backend, adoption:
    - project_name: for "Use cwd directory name" run `(Get-Location).Path | Split-Path -Leaf` (PowerShell); for "Use git remote name" run `git remote get-url origin` and take the last path segment minus `.git`; for Other use the text verbatim. Validate: non-empty, no `/` or `\`.
    - intent: the line from step 2. Validate: non-empty.
    - project_type: one of code|novel|content-site|business|research.
    - backend: none|graphify (graphify only when project_type == code).
-   - material: greenfield|brownfield.
+   - adoption: greenfield|brownfield.
    If a validation fails, REPORT it and re-ask just that item (up to 3 times), then EXIT.
 
 6. RENDER - one Bash call:
@@ -163,7 +163,7 @@ deriving / reconciling / viewing a structured MAP.
 <criteria>
 - [ ] Target directory confirmed (cwd, or git root if the user chose it); no git requirement enforced.
 - [ ] One-line intent collected (authored, or inferred-and-confirmed for brownfield).
-- [ ] Interview batch executed; project_name, project_type, material captured.
+- [ ] Answers captured - project_name, project_type, adoption - from the interview or supplied by the invocation.
 - [ ] Backend captured (asked only for code; forced none otherwise).
 - [ ] Answers parsed to valid JSON; render.py invoked; exit 0.
 - [ ] Strata present at target (or reported skipped where pre-existing); nothing overwritten.

@@ -61,7 +61,7 @@ python skills/cairn/render.py --cwd ./my-project --answers '{
   "intent": "A historical novel on a hard deadline.",
   "project_type": "novel",
   "backend": "none",
-  "material": "greenfield"
+  "adoption": "greenfield"
 }'
 ```
 

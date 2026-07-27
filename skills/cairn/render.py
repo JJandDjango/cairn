@@ -14,7 +14,7 @@ Answer keys (all required):
   intent        (str)   one line: "why does this exist?"
   project_type  (str)   code | novel | content-site | business | research
   backend       (str)   none | graphify   (graphify only meaningful for code)
-  material      (str)   greenfield | brownfield
+  adoption      (str)   greenfield | brownfield
 
 Behavior:
   - {{ var }} substitution across templates (including nested decisions/).
@@ -22,7 +22,7 @@ Behavior:
   - project_type -> component unit (Component / Chapter / Section / ...).
   - backend=graphify (code only) -> MAP gains an optional structured-schema stub
     and points at `/cairn derive`; .gitignore gains graphify-out/ + /manifest.json.
-  - material=brownfield -> intent rendered with an `(inferred - confirm)` tag.
+  - adoption=brownfield -> intent rendered with an `(inferred - confirm)` tag.
   - NO-CLOBBER: any target that already exists is skipped and reported, never
     overwritten (safe to run on a partly-documented project).
 """
@@ -47,7 +47,7 @@ TEMPLATE_TO_TARGET = {
     "decisions/ADR-template.md.template": "decisions/ADR-template.md",
 }
 
-REQUIRED_ANSWER_KEYS = {"project_name", "intent", "project_type", "backend", "material"}
+REQUIRED_ANSWER_KEYS = {"project_name", "intent", "project_type", "backend", "adoption"}
 
 PROJECT_TYPES = {"code", "novel", "content-site", "business", "research"}
 
@@ -162,10 +162,10 @@ def build_var_dict(answers: dict, today: str) -> dict:
         raise ValueError(
             f"project_type must be one of {sorted(PROJECT_TYPES)}, got {project_type!r}"
         )
-    material = answers["material"]
-    if material not in {"greenfield", "brownfield"}:
+    adoption = answers["adoption"]
+    if adoption not in {"greenfield", "brownfield"}:
         raise ValueError(
-            f"material must be 'greenfield' or 'brownfield', got {material!r}"
+            f"adoption must be 'greenfield' or 'brownfield', got {adoption!r}"
         )
     if answers.get("backend") not in {"none", "graphify"}:
         raise ValueError(
@@ -179,7 +179,7 @@ def build_var_dict(answers: dict, today: str) -> dict:
     if not intent_plain:
         raise ValueError("intent must be a non-empty one-line string")
     intent = (
-        f"{intent_plain} _(inferred - confirm)_" if material == "brownfield"
+        f"{intent_plain} _(inferred - confirm)_" if adoption == "brownfield"
         else intent_plain
     )
 
@@ -280,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "JSON dict of interview answers. Required keys: project_name (str), "
             "intent (str), project_type (code|novel|content-site|business|research), "
-            "backend (none|graphify), material (greenfield|brownfield)."
+            "backend (none|graphify), adoption (greenfield|brownfield)."
         ),
     )
     parser.add_argument(
