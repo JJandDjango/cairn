@@ -19,7 +19,7 @@ def _render(root, **overrides):
         "intent": "why it exists",
         "project_type": "novel",
         "backend": "none",
-        "material": "greenfield",
+        "adoption": "greenfield",
     }
     answers.update(overrides)
     render.render_all(answers, TEMPLATES, root, TODAY)

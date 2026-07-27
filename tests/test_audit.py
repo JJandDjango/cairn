@@ -27,7 +27,7 @@ def _scaffold(root, **overrides):
         "intent": "why it exists",
         "project_type": "code",
         "backend": "none",
-        "material": "greenfield",
+        "adoption": "greenfield",
     }
     answers.update(overrides)
     root.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ def test_fresh_novel_scaffold_is_clean_with_zero_diagram_info(tmp_path):
 
 
 def test_brownfield_scaffold_flags_exactly_the_inferred_tag(tmp_path):
-    root = _scaffold(tmp_path, material="brownfield")
+    root = _scaffold(tmp_path, adoption="brownfield")
     findings = audit.run_audit(root)
     assert _actionable(findings) == ["INFERRED-TAG"]
     assert audit.main(["--cwd", str(root)]) == 1
@@ -285,7 +285,7 @@ def test_unmarked_pages_produce_one_aggregate_info(tmp_path):
 # --------------------------------------------------------- CLI contract
 
 def test_json_format_parses_and_carries_summary(tmp_path, capsys):
-    root = _scaffold(tmp_path, material="brownfield")
+    root = _scaffold(tmp_path, adoption="brownfield")
     exit_code = audit.main(["--cwd", str(root), "--format", "json"])
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 1
@@ -307,7 +307,7 @@ def test_missing_stratum_reported_on_partial_spine(tmp_path):
 
 
 def test_audit_never_writes(tmp_path, capsys):
-    root = _scaffold(tmp_path, material="brownfield")
+    root = _scaffold(tmp_path, adoption="brownfield")
     before = {
         p: (p.stat().st_size, p.stat().st_mtime_ns)
         for p in root.rglob("*") if p.is_file()
