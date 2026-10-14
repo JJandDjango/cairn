@@ -16,7 +16,7 @@ As a Claude Code skill: copy `skills/cairn` into `~/.claude/skills/`, then
 run `/cairn` in your project. No dependencies beyond Python's standard
 library.
 
-## Set up a project 🔴 (10, 11, 12)
+## Set up a project 🟢 (10, 11, 12)
 
 Run `/cairn` in the project folder and answer five questions:
 
@@ -26,12 +26,12 @@ Run `/cairn` in the project folder and answer five questions:
 | Intent | One sentence: why the project exists |
 | Project type | `code` gets the software module; other types get the spine only, for now |
 | Adoption | `greenfield` (new project) or `brownfield` (existing project; inferred lines are tagged for you to confirm) |
-| Mode | `tracked` (files are committed) or `local` (nothing tracked is ever written) |
+| Mode | `tracked` (files are committed) or `local` (nothing tracked is ever written; ships in Pass 4) |
 
 Cairn never overwrites a file. Run it on a half-documented project and it
 fills only the gaps, then lists what it skipped.
 
-## What you get 🔴 (1-9)
+## What you get 🟢 (1-9)
 
 ```
 CLAUDE.md          imports README and ARCHITECTURE; loads at launch

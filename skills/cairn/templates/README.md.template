@@ -1,0 +1,19 @@
+# {{ project_name }}
+
+{{ intent }}
+
+## What it does
+<!-- For a user, in a few lines: what this does for them. No structure,
+     reasoning, invariants or counts; those live in ARCHITECTURE.md. -->
+
+## Install
+<!-- The shortest path from nothing to ready to use. -->
+
+## Usage
+<!-- One short example of the most common use. -->
+
+## Help and contributing
+Questions and changes: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+<!-- Name the license; link the LICENSE file once it exists. -->

@@ -7,46 +7,27 @@
 ```mermaid
 flowchart TD
     U[/cairn skill - SKILL.md/] --> R[render.py - zero-dep core]
-    R --> T[templates/ - the six strata]
+    R --> T[templates/ - the 2.0 spine]
     U --> A[audit.py - day-2 spine checker]
-    U -. backend subcommand .-> D[detect.py - dependency gate]
-    D -. only if available .-> B[backend/ - OPTIONAL graphify integration]
-    B --> G[graphify adapter - derive]
-    B --> RC[reconcile - authored vs derived]
-    B --> C[contracts - per-file dependency report]
 ```
-<!-- The ONE diagram, at container zoom. Solid edges = the zero-dep core;
-     dashed edges = the optional, dependency-gated backend. -->
+<!-- The ONE diagram, at container zoom. -->
 
 ## Components
 
 ### Core - zero-dependency
 | Component | Responsibility (one line) | Status | Deep doc |
 |---|---|---|---|
-| `render.py` | Substitute the six-strata templates into a project (no-clobber, date-stamped). The whole core engine. | stable | USAGE.md |
-| `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). | stable | `docs/audit.md` |
-| `templates/` | The six strata + DOCS-SYSTEM + seed ADR & ADR-template, with `{{ var }}` slots. | stable | DOCS-SYSTEM.md |
-| `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) and backend subcommands. | stable | no doc yet |
+| `render.py` | Substitute the 2.0 spine templates into a project (no-clobber, date-stamped, tracked mode). The whole core engine. | stable | `docs/usage-2.0.md` |
+| `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). Still checks the 1.x strata until Pass 5. | stable | `docs/audit.md` |
+| `templates/` | The 2.0 spine templates, plus the 1.x strata kept only as the audit test fixture until Pass 6, with `{{ var }}` slots. | stable | `docs/usage-2.0.md` |
+| `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) subcommands. | stable | no doc yet |
 | `prompt-lang.config.yaml` | PromptLang claim for the skill prompt - registers its section tags; write-time hook + `tests/test_promptlang.py` enforce ([[0007-adopt-promptlang-for-the-skill-prompt]]). | stable | no doc yet |
-| `detect.py` | Feature-detector that gates the optional backend (absent deps report cleanly, never crash). | stable | no doc yet |
-
-### Backend - OPTIONAL, code-only graphify integration ([[0002-optional-graphify-backend]])
-| Component | Responsibility (one line) | Status | Deep doc |
-|---|---|---|---|
-| `backend/graphify_adapter.py` | `derive` a structured code graph -> `graphify-out/graph.json`. | optional | `docs/backend.md` |
-| `backend/reconcile.py` | Diff derived graph vs authored MAP -> `proposals.md`; `--apply` writes accepted rows. | optional | `docs/backend.md` |
-| `backend/contracts.py` | Render a deterministic per-file dependency-contract report from the graph. | optional | no doc yet |
-| `backend/schema.py` + `vault.py` | Structured-MAP schema (PyYAML) + portfolio vault roll-up (`view`). | optional | `docs/backend.md` |
-| `backend_cli.py` + `backend/__main__.py` | Absolute-path launcher + subcommand dispatch (derive / reconcile / view / stage / validate / vault-add). | stable | `docs/backend.md` |
 
 ## Cross-cutting notes
-- **Core vs backend is the load-bearing seam.** The core is zero-dependency and
-  self-contained; everything under Backend is optional and dependency-gated by
-  `detect.py` ([[0002-optional-graphify-backend]]).
-- **Derived output is regenerable + gitignored** (`graphify-out/`,
-  `/manifest.json`); authored markdown is the source of record.
+- **Zero dependencies.** The graphify backend was removed in 2.0 Pass 1;
+  it built `MAP.md`, which 2.0 retires ([[0009-onboarding-documents-replace-the-strata]]).
 - Docs live outside the strata: `README.md` (overview) + `USAGE.md`
-  (step-by-step). The optional backend has a `docs/` page: `docs/backend.md`.
-- **2.0 is designed, not built**: `docs/design-2.0.md` (design + rulings),
+  (step-by-step), both still describing 1.2 until Pass 7.
+- **2.0 is being built**: `docs/design-2.0.md` (design + rulings),
   `docs/features-2.0.md` (ratified feature list) and `docs/usage-2.0.md`
   (user guide, status markers per feature); [[0009-onboarding-documents-replace-the-strata]].

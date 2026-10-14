@@ -1,0 +1,31 @@
+# Architecture - {{ project_name }}
+
+## Intent
+{{ intent }}
+
+## Invariants
+<!-- What must stay true, one line each. A change that breaks one needs an
+     ADR in decisions/. -->
+
+{{ diagram_section }}## Folder map
+<!-- One row per top-level folder, each linking its page. -->
+
+| Folder | Purpose |
+|---|---|
+| [decisions/](decisions/) | Decision records, append-only |
+| [docs/](docs/) | Recipe pages, feature and design documents |
+
+## Where things live
+Each fact lives in one place. Look it up here instead of guessing.
+
+| Kind of fact | Home |
+|---|---|
+| What it is and how to use it | [README.md](README.md) |
+| Intent, invariants, folder map | This file |
+| How work is done | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| One kind of work | Its recipe page in [docs/](docs/) |
+| A decision | Its ADR in [decisions/](decisions/) |
+| A feature's what and why; its design | Its feature or design document in [docs/](docs/) |
+| Backlog and open questions | Issues |
+{{ status_row }}| Releases | [CHANGELOG.md](CHANGELOG.md) |
+| This machine's paths and tools | `CLAUDE.local.md` (untracked) |

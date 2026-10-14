@@ -8,7 +8,7 @@
 
 ## What it is
 A deterministic, REPORT-ONLY checker that makes the `DOCS-SYSTEM.md` audit
-checklist executable. Core tier: stdlib only, never behind `detect.py`, works
+checklist executable. Core tier: stdlib only, works
 on non-code spines and without git (history checks degrade to mtimes or skip).
 
 Run it via `/cairn audit`, or standalone:
@@ -37,9 +37,9 @@ invisible to its checks, so guidance text and commented-out entries never flag.
 
 ## The covers marker
 A docs page may declare what it explains, so staleness is checkable:
-`<!-- covers: skills/cairn/backend/, skills/cairn/backend_cli.py -->` -
+`<!-- covers: skills/cairn/render.py, skills/cairn/templates/ -->` -
 comma-separated files, directories, or globs, relative to the project root.
-Derived churn (`__pycache__`, `.git`, `graphify-out`, `.pyc`) never counts as
+Derived churn (`__pycache__`, `.git`, `node_modules`, `.pytest_cache`, `.pyc`) never counts as
 activity. Last-touch dates come from git when available, else mtimes.
 
 ## The one invariant

@@ -16,9 +16,7 @@ from pathlib import Path
 import pytest
 
 import audit
-import render
-
-TEMPLATES = Path(render.__file__).parent / "templates"
+import spine_1x
 
 
 def _scaffold(root, **overrides):
@@ -26,13 +24,12 @@ def _scaffold(root, **overrides):
         "project_name": "demo",
         "intent": "why it exists",
         "project_type": "code",
-        "backend": "none",
         "adoption": "greenfield",
     }
     answers.update(overrides)
     root.mkdir(parents=True, exist_ok=True)
     # Stamp with the real today so mtime-based freshness sees a fresh spine.
-    render.render_all(answers, TEMPLATES, root, date.today().isoformat())
+    spine_1x.render_1x(answers, root, date.today().isoformat())
     return root
 
 

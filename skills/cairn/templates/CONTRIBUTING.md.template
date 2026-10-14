@@ -1,0 +1,16 @@
+# Contributing to {{ project_name }}
+
+Read this before working or committing.
+
+## Set up and test
+<!-- The steps from a fresh copy to a passing check. -->
+
+## Workflow
+<!-- How a change moves: branch, review, merge, release. -->
+
+## House rules
+<!-- One line each; link the ADR when a rule has one. -->
+
+## Recipes
+One link per kind of work, each to its recipe page in docs/. Start a new
+one from [the recipe template](docs/recipe-template.md).
