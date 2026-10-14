@@ -181,7 +181,8 @@ Cairn's documents; that list changes when 2.0 lands.
    2026-10-14.
 2. ~~A strikeable feature list from this design, ratified before any plan.~~
    Done 2026-10-14: [features-2.0.md](features-2.0.md), all 31 kept.
-3. The THEORY amendments and superseding ADRs, as their own commits.
+3. ~~The THEORY amendments and superseding ADRs, as their own commits.~~
+   Done 2026-10-14: THEORY amended; ADR 0009 supersedes 0002, 0004, 0008.
 4. The build, then the kit's migration as the first consumer.
 
 Work with the user piece by piece: short replies, one question each.
