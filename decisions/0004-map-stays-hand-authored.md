@@ -1,6 +1,6 @@
 # 4. Cairn's own MAP stays hand-authored — no self-derive
 
-Status: accepted
+Status: superseded by 0009
 Date: 2026-07-13
 
 ## Context

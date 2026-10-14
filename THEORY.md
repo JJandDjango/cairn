@@ -7,8 +7,8 @@
 A zero-dependency, pace-layered documentation spine that keeps any project
 legible over time: cheap to start, cheap to keep true. Cairn scaffolds the spine
 **and** carries the day-2 discipline that keeps it alive, so a reader (human or
-LLM) learns *what, how, and where* from THEORY -> MAP -> STATE in minutes - on a
-codebase or a novel alike.
+LLM) learns *what, how, and where* from root CLAUDE.md -> README -> ARCHITECTURE
+in minutes - on a codebase or a novel alike.
 
 ## Invariants
 <!-- What must stay true no matter what changes below. The load-bearing constraints. -->
@@ -17,37 +17,42 @@ codebase or a novel alike.
   the core never does.
 - **No-clobber, always.** Cairn never overwrites authored content. It is safe to
   run on a half-documented project - it fills only the gaps.
-- **The pace-layer contract.** Every stratum answers exactly one question and
-  carries a size budget, an update trigger, and a maintenance mode. That fixed
-  contract is what makes the system formulaic across a project of any kind.
-- **Structural anti-rot rules.** One diagram per project (in MAP); decisions are
-  append-only (never edited, only superseded); STATE is disposable (regenerated,
-  never hand-patched).
+- **The pace-layer contract.** Every file answers exactly one question and
+  carries a size budget (enforced as a check), an update trigger, and a
+  maintenance mode. That fixed contract is what makes the system formulaic
+  across a project of any kind.
+- **Structural anti-rot rules.** One diagram per project (in ARCHITECTURE);
+  decisions are append-only (never edited, only superseded); nothing in flight
+  is stored - the status command derives it.
 - **Human owns the why; machines own only regenerable structure.** Derived output
-  (e.g. a graphify-built MAP) is optional, gitignored, and reconciled against
-  authored truth - never the source of record.
-- **Portable by construction.** Works without a git repository and without code.
-  A novel, a business plan, or a research program is a first-class target.
+  (e.g. docstring lines copied into a folder page) is reconciled against
+  authored truth and never the source of record; it may be committed only
+  behind the freshness check.
+- **The spine is portable; modules are not.** The spine (root CLAUDE.md,
+  README, ARCHITECTURE, CONTRIBUTING) works without a git repository and
+  without code; a novel, a business plan, or a research program is a
+  first-class target. A type module (software first: folder pages,
+  docstrings, the status command) may need git and code.
 
 ## Success criteria
 <!-- How you'll know it's working. -->
-- A newcomer reads THEORY -> MAP -> STATE (~2-3k tokens) and can act without
-  reading the source.
+- A newcomer reads root CLAUDE.md -> README -> ARCHITECTURE (about 1.3k tokens,
+  held there by the size budgets) and can act without reading the source.
 - The spine survives contact with time: months on, it still reflects reality
-  because each stratum had exactly one cheap update trigger.
+  because each file had exactly one cheap update trigger.
 - Running Cairn on a half-documented project adds only what is missing and breaks
   nothing.
-- The same routine works unchanged on code and non-code projects - only the
-  component label and the diagram differ.
+- The spine works unchanged on any project; a type module adds only its own
+  files and checks.
 
 ## Non-goals
 <!-- What this explicitly does NOT try to do - the anti-scope that stops drift. -->
 - **Not owned by any consumer.** Cairn feeds other tools - one may consume its
   output - but is never owned by or dependent on one. Cairn stands alone; coupling
   to any specific consumer is out of scope.
-- **Not a code-analysis engine.** The graphify backend is an *optional*
-  enhancement of one stratum (MAP), not Cairn's identity; the core's value holds
-  with the backend absent. (See [[0003-1.0-scope]].)
+- **Not a code-analysis engine.** The software module reads only the folder
+  tree and each file's first docstring line; it parses no code. (The 1.x
+  graphify backend is retired; see [[0003-1.0-scope]].)
 - **Not a docs-site / wiki / API-reference generator.** Cairn is a spine for
   *reasoning*, not a publishing pipeline or an auto-extracted reference.
 - **Not a universal everything-tool.** "Any project" means the *pace-layered
