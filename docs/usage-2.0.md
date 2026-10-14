@@ -43,7 +43,8 @@ decisions/         ADRs, append-only
 docs/              recipe pages, feature and design documents
 ```
 
-Plus a local, untracked note for this machine's paths and tools.
+Plus `CLAUDE.local.md`, a local, untracked note for this machine's paths
+and tools; tracked mode adds it to `.gitignore` once.
 
 A session reads in this order, stopping when it knows enough:
 
