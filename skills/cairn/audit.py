@@ -62,7 +62,7 @@ LINES_PER_PAGE = 80
 SEVERITY_RANK = {"ERROR": 0, "WARN": 1, "INFO": 2}
 
 # Never treated as covered-file activity (derived/regenerable churn).
-IGNORED_PARTS = {"__pycache__", ".git", "graphify-out", "node_modules", ".pytest_cache"}
+IGNORED_PARTS = {"__pycache__", ".git", "node_modules", ".pytest_cache"}
 
 Finding = namedtuple("Finding", ["severity", "code", "message", "path"])
 

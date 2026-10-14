@@ -1,8 +1,9 @@
-"""Render the Cairn documentation spine into a project directory.
+"""Render the Cairn 2.0 spine into a project directory.
 
-Cairn lays down a pace-layered documentation spine — six strata, each under a
-fixed contract (one question / size budget / update trigger / maintenance mode) —
-for any project, code or not. Zero third-party dependencies.
+Cairn writes the few short documents a new collaborator reads on day one:
+root CLAUDE.md, README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md,
+decisions/, docs/ templates, and a local, untracked note. Zero third-party
+dependencies.
 
 Invoked two ways:
   1. By the /cairn skill after its interview (see SKILL.md), or
@@ -13,16 +14,16 @@ Answer keys (all required):
   project_name  (str)   e.g. "my-novel"
   intent        (str)   one line: "why does this exist?"
   project_type  (str)   code | novel | content-site | business | research
-  backend       (str)   none | graphify   (graphify only meaningful for code)
   adoption      (str)   greenfield | brownfield
+  mode          (str)   tracked | local   (local is not built yet: exits 1)
 
 Behavior:
-  - {{ var }} substitution across templates (including nested decisions/).
-  - date.today() stamps STATE.md and the seed ADR.
-  - project_type -> component unit (Component / Chapter / Section / ...).
-  - backend=graphify (code only) -> MAP gains an optional structured-schema stub
-    and points at `/cairn derive`; .gitignore gains graphify-out/ + /manifest.json.
+  - {{ var }} substitution across templates (including decisions/ and docs/).
+  - date.today() stamps the seed ADR.
+  - project_type=code -> ARCHITECTURE.md gains the one diagram and the
+    status-command row; every other type gets the same spine without them.
   - adoption=brownfield -> intent rendered with an `(inferred - confirm)` tag.
+  - mode=tracked -> .gitignore gains `CLAUDE.local.md` once.
   - NO-CLOBBER: any target that already exists is skipped and reported, never
     overwritten (safe to run on a partly-documented project).
 """
@@ -38,100 +39,42 @@ from pathlib import Path
 
 
 TEMPLATE_TO_TARGET = {
-    "THEORY.md.template": "THEORY.md",
-    "MAP.md.template": "MAP.md",
-    "STATE.md.template": "STATE.md",
-    "CONVENTIONS.md.template": "CONVENTIONS.md",
-    "DOCS-SYSTEM.md.template": "DOCS-SYSTEM.md",
+    "CLAUDE.md.template": "CLAUDE.md",
+    "README.md.template": "README.md",
+    "ARCHITECTURE.md.template": "ARCHITECTURE.md",
+    "CONTRIBUTING.md.template": "CONTRIBUTING.md",
+    "CHANGELOG.md.template": "CHANGELOG.md",
+    "CLAUDE.local.md.template": "CLAUDE.local.md",
     "decisions/0001-record-architecture-decisions.md.template": "decisions/0001-record-architecture-decisions.md",
     "decisions/ADR-template.md.template": "decisions/ADR-template.md",
+    "docs/recipe-template.md.template": "docs/recipe-template.md",
+    "docs/feature-template.md.template": "docs/feature-template.md",
+    "docs/design-template.md.template": "docs/design-template.md",
 }
 
-REQUIRED_ANSWER_KEYS = {"project_name", "intent", "project_type", "backend", "adoption"}
+REQUIRED_ANSWER_KEYS = {"project_name", "intent", "project_type", "adoption", "mode"}
 
 PROJECT_TYPES = {"code", "novel", "content-site", "business", "research"}
 
-# project_type -> (column label [singular], section heading [plural])
-COMPONENT_UNIT = {
-    "code": ("Component", "Components"),
-    "novel": ("Chapter", "Chapters"),
-    "content-site": ("Section", "Sections"),
-    "business": ("Workstream", "Workstreams"),
-    "research": ("Claim", "Claims"),
-}
+MODES = {"tracked", "local"}
 
-# project_type -> one starter-rule example rendered (commented) into CONVENTIONS.md.
-CONVENTIONS_EXAMPLE = {
-    "code": "- **Match the idiom.** New code follows the touched layer's dominant pattern.",
-    "novel": "- **Tense and POV hold.** One narrative voice; a break is a marked choice.",
-    "content-site": "- **One voice.** Active voice, second person, no unexplained jargon.",
-    "business": "- **Decisions have owners.** Every decision names one accountable owner.",
-    "research": "- **Claims cite methods.** No claim without the method and data behind it.",
-}
+# The local note stays untracked; tracked mode keeps it out of git this way.
+LOCAL_NOTE = "CLAUDE.local.md"
 
-# .gitignore entries added ONLY when the graphify backend is chosen.
-BACKEND_GITIGNORE_ENTRIES = ["graphify-out/", "/manifest.json"]
-
-CODE_DIAGRAM_NOTE = (
+CODE_DIAGRAM_SECTION = (
+    "## Diagram\n"
+    "\n"
     "```mermaid\n"
     "flowchart TD\n"
     "    A[component A] --> B[component B]\n"
     "```\n"
-    "<!-- The ONE diagram in this project, at ~C4 container zoom. Anything deeper\n"
-    "     rots faster than you can maintain it - use the table below for detail. -->"
+    "<!-- The ONE diagram in this project, at container zoom. Anything deeper\n"
+    "     rots faster than you can maintain it. -->\n"
+    "\n"
 )
 
-NONCODE_DIAGRAM_NOTE = (
-    "<!-- No diagram for a non-code project - the table below is the map.\n"
-    "     Add a single Mermaid diagram here only if it genuinely earns its upkeep. -->"
-)
-
-
-def _structured_map_stub(project_name: str, purpose: str) -> str:
-    """OPTIONAL structured-model stub prepended to MAP.md for graphify-backend code
-    projects. A commented block mirroring backend/schema.py so the schema is
-    discoverable without forcing frontmatter onto a fresh MAP: a hand-author
-    uncomments and fills it, or `/cairn derive` generates it from the code graph.
-    Returns "" for every non-backend project -> that MAP renders unchanged. Values
-    are interpolated here (not via {{ }}) so the single-pass substitutor never
-    rescans this block. `cairn_schema` is the schema version key (backend/schema.py)."""
-    return (
-        "<!-- OPTIONAL structured model - graphify-backend projects only.\n"
-        "     Uncomment the YAML and fill it, or run `/cairn derive` to generate it\n"
-        "     from the code graph (then `/cairn reconcile` to keep authored vs\n"
-        "     derived honest). Schema + validation: backend/schema.py.\n"
-        "\n"
-        "cairn_schema: 1\n"
-        f"name: {project_name}\n"
-        f"purpose: {purpose}\n"
-        "status: active            # greenfield | active | maintenance | archived\n"
-        "components:                # >=1 required once uncommented\n"
-        "  - name: example-component\n"
-        "    role: what it does (one line)\n"
-        "    level: module          # system | module | implementation\n"
-        "    location: path/to/file.py\n"
-        "# flows:                   # optional: named paths through >=2 components\n"
-        "#   - name: main-flow\n"
-        "#     entry: example-component\n"
-        "#     stages:\n"
-        "#       - component: example-component\n"
-        "#         role: start\n"
-        "#         stage: entry\n"
-        "-->\n\n"
-    )
-
-
-def _docs_backend_note() -> str:
-    """The optional-backend bullet appended to DOCS-SYSTEM.md for graphify-backend
-    projects. Returns "" otherwise -> that DOCS-SYSTEM renders unchanged."""
-    return (
-        "\n- **Optional structured MAP (backend projects).** With the graphify "
-        "backend, `MAP.md` may carry a YAML frontmatter model (components / flows / "
-        "typed relationships; schema in `backend/schema.py`). Generate it with "
-        "`/cairn derive`, reconcile authored vs derived with `/cairn reconcile`, and "
-        "roll up the portfolio with `/cairn view`. Without the backend, `MAP.md` is a "
-        "hand-edited table - no frontmatter required."
-    )
+# The status command ships in a later pass of the 2.0 build, which names it.
+CODE_STATUS_ROW = "| Last done, next, and what waits on you | The status command (to be named) |\n"
 
 
 def substitute(template_text: str, variables: dict) -> str:
@@ -147,16 +90,12 @@ def substitute(template_text: str, variables: dict) -> str:
     return pattern.sub(replace, template_text)
 
 
-def effective_backend(answers: dict) -> str:
-    """The graphify backend is only meaningful for code; coerce to none otherwise."""
-    backend = answers.get("backend", "none")
-    if backend == "graphify" and answers.get("project_type") != "code":
-        return "none"
-    return backend
-
-
 def build_var_dict(answers: dict, today: str) -> dict:
     """Expand interview answers into the full template variable namespace."""
+    if "backend" in answers:
+        raise ValueError(
+            "the 'backend' answer was removed in Cairn 2.0; drop it from the answers"
+        )
     project_type = answers["project_type"]
     if project_type not in PROJECT_TYPES:
         raise ValueError(
@@ -167,13 +106,14 @@ def build_var_dict(answers: dict, today: str) -> dict:
         raise ValueError(
             f"adoption must be 'greenfield' or 'brownfield', got {adoption!r}"
         )
-    if answers.get("backend") not in {"none", "graphify"}:
+    mode = answers.get("mode")
+    if mode not in MODES:
+        raise ValueError(f"mode must be 'tracked' or 'local', got {mode!r}")
+    if mode == "local":
         raise ValueError(
-            f"backend must be 'none' or 'graphify', got {answers.get('backend')!r}"
+            "local mode is not built yet (Cairn 2.0 build, Pass 4); "
+            "rerun with mode 'tracked'"
         )
-
-    backend = effective_backend(answers)
-    unit_col, unit_plural = COMPONENT_UNIT[project_type]
 
     intent_plain = str(answers["intent"]).strip()
     if not intent_plain:
@@ -183,37 +123,18 @@ def build_var_dict(answers: dict, today: str) -> dict:
         else intent_plain
     )
 
-    diagram_note = CODE_DIAGRAM_NOTE if project_type == "code" else NONCODE_DIAGRAM_NOTE
-
-    if backend == "graphify":
-        map_mode = (
-            "hand-edited **or** graphify-derived (run `/cairn derive` to regenerate "
-            "the component table from the code graph)"
-        )
-        map_structured_stub = _structured_map_stub(answers["project_name"], intent_plain)
-        backend_note = _docs_backend_note()
-    else:
-        map_mode = "hand-edited"
-        map_structured_stub = ""
-        backend_note = ""
-
+    is_code = project_type == "code"
     return {
         "project_name": answers["project_name"],
         "intent": intent,
-        "project_type": project_type,
-        "component_unit_col": unit_col,
-        "component_unit_plural": unit_plural,
-        "conventions_example": CONVENTIONS_EXAMPLE[project_type],
-        "diagram_note": diagram_note,
-        "map_mode": map_mode,
-        "map_structured_stub": map_structured_stub,
-        "backend_note": backend_note,
+        "diagram_section": CODE_DIAGRAM_SECTION if is_code else "",
+        "status_row": CODE_STATUS_ROW if is_code else "",
         "date": today,
     }
 
 
 def render_all(answers: dict, templates_dir: Path, cwd: Path, today: str):
-    """Render every stratum. Returns (created, skipped) path lists. No-clobber."""
+    """Render every spine file. Returns (created, skipped) path lists. No-clobber."""
     variables = build_var_dict(answers, today)
     created: list[Path] = []
     skipped: list[Path] = []
@@ -233,28 +154,15 @@ def render_all(answers: dict, templates_dir: Path, cwd: Path, today: str):
         target_path.write_text(rendered, encoding="utf-8")
         created.append(target_path)
 
-    # docs/ stratum: an empty directory (pages are authored on touch, not up front).
-    gitkeep = cwd / "docs" / ".gitkeep"
-    if gitkeep.exists():
-        skipped.append(gitkeep)
-    else:
-        gitkeep.parent.mkdir(parents=True, exist_ok=True)
-        gitkeep.touch()
-        created.append(gitkeep)
-
     return created, skipped
 
 
-def update_gitignore(cwd: Path, backend: str) -> bool:
-    """Append graphify-backend entries to .gitignore. Returns True if modified."""
-    if backend != "graphify":
-        return False
-
+def update_gitignore(cwd: Path) -> bool:
+    """Append the local note to .gitignore once. Returns True if modified."""
     gitignore = cwd / ".gitignore"
     existing = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
 
-    additions = [e for e in BACKEND_GITIGNORE_ENTRIES if e not in existing]
-    if not additions:
+    if LOCAL_NOTE in existing.splitlines():
         return False
 
     if not existing:
@@ -263,8 +171,7 @@ def update_gitignore(cwd: Path, backend: str) -> bool:
         lead = "\n"            # prior content ends cleanly: one blank separator
     else:
         lead = "\n\n"          # prior content lacks trailing newline: finish it, then separate
-    block = lead + "# graphify derived artifacts (added by cairn)\n"
-    block += "".join(f"{e}\n" for e in additions)
+    block = lead + "# this machine's untracked note (added by cairn)\n" + LOCAL_NOTE + "\n"
 
     gitignore.write_text(existing + block, encoding="utf-8")
     return True
@@ -272,7 +179,7 @@ def update_gitignore(cwd: Path, backend: str) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Render the Cairn documentation spine for a project."
+        description="Render the Cairn 2.0 spine for a project."
     )
     parser.add_argument(
         "--answers",
@@ -280,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "JSON dict of interview answers. Required keys: project_name (str), "
             "intent (str), project_type (code|novel|content-site|business|research), "
-            "backend (none|graphify), adoption (greenfield|brownfield)."
+            "adoption (greenfield|brownfield), mode (tracked|local)."
         ),
     )
     parser.add_argument(
@@ -314,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: render failed: {exc}", file=sys.stderr)
         return 1
 
-    gitignore_modified = update_gitignore(cwd, effective_backend(answers))
+    gitignore_modified = update_gitignore(cwd)
 
     for f in created:
         print(f"created  {f.relative_to(cwd)}")
@@ -324,7 +231,7 @@ def main(argv: list[str] | None = None) -> int:
         print("updated  .gitignore")
 
     if not created:
-        print("\nNothing new to create - every stratum already exists.")
+        print("\nNothing new to create - every spine file already exists.")
     return 0
 
 
