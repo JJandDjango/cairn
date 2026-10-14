@@ -47,3 +47,5 @@ flowchart TD
   `/manifest.json`); authored markdown is the source of record.
 - Docs live outside the strata: `README.md` (overview) + `USAGE.md`
   (step-by-step). The optional backend has a `docs/` page: `docs/backend.md`.
+- **2.0 is designed, not built**: `docs/design-2.0.md` (design + rulings) and
+  `docs/features-2.0.md` (ratified feature list); [[0009-onboarding-documents-replace-the-strata]].
