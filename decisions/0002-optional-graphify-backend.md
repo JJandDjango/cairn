@@ -1,6 +1,6 @@
 # 2. The graphify backend is optional and dependency-gated
 
-Status: accepted
+Status: superseded by 0009
 Date: 2026-07-12
 
 ## Context
