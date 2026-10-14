@@ -1,11 +1,10 @@
 # Features - Cairn 2.0
 
 > Drafted 2026-10-14 from [design-2.0.md](design-2.0.md), after the four
-> THEORY rulings. Status: draft, for the user to strike lines. The kept set
-> scopes the plan; nothing here is built.
+> THEORY rulings. Status: ratified 2026-10-14 with no lines struck. The
+> kept set scopes the plan; nothing here is built.
 
-Strike a line to drop it. Lines marked *(open)* depend on a question the
-design leaves open.
+Lines marked *(open)* depend on a question the design leaves open.
 
 ## Spine (portable, every project)
 

@@ -179,7 +179,8 @@ Cairn's documents; that list changes when 2.0 lands.
 
 1. ~~The user rules on the four conflicts above, one at a time.~~ Done
    2026-10-14.
-2. A strikeable feature list from this design, ratified before any plan.
+2. ~~A strikeable feature list from this design, ratified before any plan.~~
+   Done 2026-10-14: [features-2.0.md](features-2.0.md), all 31 kept.
 3. The THEORY amendments and superseding ADRs, as their own commits.
 4. The build, then the kit's migration as the first consumer.
 
