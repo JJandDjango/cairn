@@ -2,8 +2,9 @@
 
 Cairn writes the few short documents a new collaborator reads on day one:
 root CLAUDE.md, README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md,
-decisions/, docs/ templates, and a local, untracked note. Zero third-party
-dependencies.
+decisions/, docs/ templates, and a local, untracked note. Local mode writes
+the same set under .docs-local/ and touches nothing tracked. Zero
+third-party dependencies.
 
 Invoked two ways:
   1. By the /cairn skill after its interview (see SKILL.md), or
@@ -15,7 +16,7 @@ Answer keys (all required):
   intent        (str)   one line: "why does this exist?"
   project_type  (str)   code | novel | content-site | business | research
   adoption      (str)   greenfield | brownfield
-  mode          (str)   tracked | local   (local is not built yet: exits 1)
+  mode          (str)   tracked | local
 
 Behavior:
   - {{ var }} substitution across templates (including decisions/ and docs/).
@@ -26,6 +27,13 @@ Behavior:
   - mode=tracked -> .gitignore gains `CLAUDE.local.md` once.
   - project_type=code -> pages.py then writes a folder page (CLAUDE.md) in
     each working folder and refreshes the docstring lines in existing ones.
+  - mode=local -> nothing tracked is written. The spine goes under
+    .docs-local/ (with a .gitignore of `*`, written only when missing); one
+    root CLAUDE.local.md imports its README and ARCHITECTURE; folder pages
+    are CLAUDE.local.md. CLAUDE.local.md is added once to the exclude file
+    git reports (so worktrees work). Outside git the exclude is skipped and
+    one line says so. The root .gitignore is never touched. Every local run
+    prints the `git clean -x` caution.
   - NO-CLOBBER: any target that already exists is skipped and reported, never
     overwritten (safe to run on a partly-documented project).
 """
@@ -35,6 +43,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
@@ -64,6 +73,26 @@ MODES = {"tracked", "local"}
 
 # The local note stays untracked; tracked mode keeps it out of git this way.
 LOCAL_NOTE = "CLAUDE.local.md"
+
+# Local mode: the same set under .docs-local/, plus one root note that imports
+# its README and ARCHITECTURE. The tracked-mode root CLAUDE.md and note drop out.
+LOCAL_DIR = ".docs-local"
+LOCAL_ROOT_TEMPLATE = "CLAUDE.local-root.md.template"
+LOCAL_TEMPLATE_TO_TARGET = {
+    template: f"{LOCAL_DIR}/{target}"
+    for template, target in TEMPLATE_TO_TARGET.items()
+    if target not in {"CLAUDE.md", LOCAL_NOTE}
+}
+LOCAL_TEMPLATE_TO_TARGET[LOCAL_ROOT_TEMPLATE] = LOCAL_NOTE
+LOCAL_IMPORTS = (f"@{LOCAL_DIR}/README.md", f"@{LOCAL_DIR}/ARCHITECTURE.md")
+
+# The folder hides itself and its contents from git with this file.
+LOCAL_GITIGNORE = f"{LOCAL_DIR}/.gitignore"
+
+CLEAN_CAUTION = (
+    "caution  `git clean -x` deletes every file Cairn wrote in local mode: "
+    "they are untracked and ignored."
+)
 
 CODE_DIAGRAM_SECTION = (
     "## Diagram\n"
@@ -113,11 +142,6 @@ def build_var_dict(answers: dict, today: str) -> dict:
     mode = answers.get("mode")
     if mode not in MODES:
         raise ValueError(f"mode must be 'tracked' or 'local', got {mode!r}")
-    if mode == "local":
-        raise ValueError(
-            "local mode is not built yet (Cairn 2.0 build, Pass 4); "
-            "rerun with mode 'tracked'"
-        )
 
     intent_plain = str(answers["intent"]).strip()
     if not intent_plain:
@@ -143,7 +167,10 @@ def render_all(answers: dict, templates_dir: Path, cwd: Path, today: str):
     created: list[Path] = []
     skipped: list[Path] = []
 
-    for template_name, target_rel in TEMPLATE_TO_TARGET.items():
+    local = answers["mode"] == "local"
+    targets = LOCAL_TEMPLATE_TO_TARGET if local else TEMPLATE_TO_TARGET
+
+    for template_name, target_rel in targets.items():
         template_path = templates_dir / template_name
         if not template_path.exists():
             raise FileNotFoundError(f"Missing template: {template_path}")
@@ -158,16 +185,38 @@ def render_all(answers: dict, templates_dir: Path, cwd: Path, today: str):
         target_path.write_text(rendered, encoding="utf-8")
         created.append(target_path)
 
+    if local:
+        # Written only when missing: an existing one is never rewritten.
+        hide = cwd / LOCAL_GITIGNORE
+        if not hide.exists():
+            hide.parent.mkdir(parents=True, exist_ok=True)
+            hide.write_bytes(b"*\n")   # exactly `*` and a newline, on any OS
+            created.append(hide)
+
     return created, skipped
 
 
-def update_gitignore(cwd: Path) -> bool:
-    """Append the local note to .gitignore once. Returns True if modified."""
-    gitignore = cwd / ".gitignore"
-    existing = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
+def exclude_path(cwd: Path) -> Path | None:
+    """The exclude file git reads for this project, or None outside git.
 
+    Asked of git, not built from `.git/`, so a worktree (`.git` is a file)
+    gets the right one.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-path", "info/exclude"],
+            cwd=cwd, capture_output=True, check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    text = result.stdout.decode("utf-8", errors="replace").strip()
+    return cwd / text if text else None
+
+
+def _with_local_note(existing: str) -> str | None:
+    """The ignore text with the local note appended, or None if it has it."""
     if LOCAL_NOTE in existing.splitlines():
-        return False
+        return None
 
     if not existing:
         lead = ""              # fresh file: no leading blank line
@@ -175,10 +224,68 @@ def update_gitignore(cwd: Path) -> bool:
         lead = "\n"            # prior content ends cleanly: one blank separator
     else:
         lead = "\n\n"          # prior content lacks trailing newline: finish it, then separate
-    block = lead + "# this machine's untracked note (added by cairn)\n" + LOCAL_NOTE + "\n"
+    return existing + lead + "# this machine's untracked note (added by cairn)\n" + LOCAL_NOTE + "\n"
 
-    gitignore.write_text(existing + block, encoding="utf-8")
+
+def update_gitignore(cwd: Path) -> bool:
+    """Append the local note to .gitignore once. Returns True if modified."""
+    gitignore = cwd / ".gitignore"
+    existing = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
+
+    updated = _with_local_note(existing)
+    if updated is None:
+        return False
+
+    gitignore.write_text(updated, encoding="utf-8")
     return True
+
+
+def update_exclude(exclude: Path) -> bool:
+    """Append the local note to the exclude file once. Returns True if modified.
+
+    Read and written byte for byte (no newline translation): the file is
+    the user's, and everything already in it stays as it was.
+    """
+    existing = ""
+    if exclude.exists():
+        with open(exclude, encoding="utf-8", newline="") as f:
+            existing = f.read()
+
+    updated = _with_local_note(existing)
+    if updated is None:
+        return False
+
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with open(exclude, "w", encoding="utf-8", newline="") as f:
+        f.write(updated)
+    return True
+
+
+def _shown(path: Path, cwd: Path) -> Path:
+    """The path relative to the project when it is under it, else as given."""
+    try:
+        return path.relative_to(cwd)
+    except ValueError:
+        return path
+
+
+def _missing_imports(cwd: Path, skipped: list[Path]) -> list[str]:
+    """Lines telling the user which imports a kept root note lacks.
+
+    A root CLAUDE.local.md that already existed is never edited, so Claude
+    Code would not load the local docs until the user adds the imports.
+    """
+    note = cwd / LOCAL_NOTE
+    if note not in skipped:
+        return []
+    try:
+        have = note.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        have = []
+    lacking = [line for line in LOCAL_IMPORTS if line not in have]
+    if not lacking:
+        return []
+    return [f"add to {LOCAL_NOTE} so the local docs load:"] + [f"  {line}" for line in lacking]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -219,13 +326,33 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     today = date.today().isoformat()
+    local = answers["mode"] == "local"
+    exclude = None
+    exclude_modified = False
+    if local:
+        # Check the answers, then write the exclude, before any file lands: a
+        # failure leaves nothing for git to show.
+        try:
+            build_var_dict(answers, today)
+        except (KeyError, TypeError, ValueError) as exc:
+            print(f"ERROR: render failed: {exc}", file=sys.stderr)
+            return 1
+        exclude = exclude_path(cwd)
+        if exclude is not None:
+            try:
+                exclude_modified = update_exclude(exclude)
+            except OSError as exc:
+                print(f"ERROR: could not write {exclude}: {exc}", file=sys.stderr)
+                return 1
+
     try:
         created, skipped = render_all(answers, templates_dir, cwd, today)
     except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
         print(f"ERROR: render failed: {exc}", file=sys.stderr)
         return 1
 
-    gitignore_modified = update_gitignore(cwd)
+    # Local mode never creates or edits the root .gitignore.
+    gitignore_modified = False if local else update_gitignore(cwd)
 
     for f in created:
         print(f"created  {f.relative_to(cwd)}")
@@ -234,9 +361,18 @@ def main(argv: list[str] | None = None) -> int:
     if gitignore_modified:
         print("updated  .gitignore")
 
+    if local:
+        if exclude is None:
+            print("note     not a git repository: no exclude file to update")
+        elif exclude_modified:
+            print(f"updated  {_shown(exclude, cwd)}")
+        for line in _missing_imports(cwd, skipped):
+            print(line)
+        print(CLEAN_CAUTION)
+
     if answers["project_type"] == "code":
         try:
-            pages.report(pages.run(cwd))
+            pages.report(pages.run(cwd, pages.LOCAL_PAGE if local else pages.PAGE))
         except OSError as exc:
             print(f"ERROR: folder pages failed: {exc}", file=sys.stderr)
             return 1

@@ -3,6 +3,8 @@
 Focus: which folders get a page, what a new page holds, the docstring lines
 in its marked block, reruns that touch only that block, and the CLI. The
 test numbers in comments are the Pass 2 test list approved 2026-10-14.
+Tests 10, 11, 12 and 14 run once per page name, CLAUDE.md and (local mode)
+CLAUDE.local.md; the rest of local mode is in test_local.py.
 """
 import json
 import re
@@ -16,6 +18,7 @@ import render
 
 TEMPLATES = Path(render.__file__).parent / "templates"
 NONCODE_TYPES = ["novel", "content-site", "business", "research"]
+PAGE_NAMES = [pages.PAGE, pages.LOCAL_PAGE]
 
 
 def _write(root, rel, text=""):
@@ -210,12 +213,14 @@ def test_undocumented_file_starter_line_outside_block(tmp_path, name, source):  
 
 # ---------------------------------------------------------- reruns (10-14)
 
-def test_rerun_unchanged_is_byte_identical(tmp_path):  # 10
+@pytest.mark.parametrize("page", PAGE_NAMES)
+def test_rerun_unchanged_is_byte_identical(tmp_path, page):  # 10
     _project(tmp_path)
-    pages.run(tmp_path)
-    before = {p: p.read_bytes() for p in tmp_path.rglob("CLAUDE.md")}
-    assert pages.run(tmp_path) == []
-    assert {p: p.read_bytes() for p in tmp_path.rglob("CLAUDE.md")} == before
+    pages.run(tmp_path, page)
+    before = {p: p.read_bytes() for p in tmp_path.rglob(page)}
+    assert before
+    assert pages.run(tmp_path, page) == []
+    assert {p: p.read_bytes() for p in tmp_path.rglob(page)} == before
 
 
 def _type_into(root, rel):
@@ -228,49 +233,53 @@ def _type_into(root, rel):
     return page
 
 
-def test_docstring_edit_changes_only_block_line(tmp_path):  # 11
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_docstring_edit_changes_only_block_line(tmp_path, page_name):  # 11
     _project(tmp_path)
-    pages.run(tmp_path)
-    typed = _type_into(tmp_path, "src/app/CLAUDE.md")
+    pages.run(tmp_path, page_name)
+    typed = _type_into(tmp_path, f"src/app/{page_name}")
     _write(tmp_path, "src/app/main.py", '"""Boot the app."""\n')
-    assert pages.run(tmp_path) == [("updated", "src/app/CLAUDE.md")]
-    page = _read(tmp_path, "src/app/CLAUDE.md")
+    assert pages.run(tmp_path, page_name) == [("updated", f"src/app/{page_name}")]
+    page = _read(tmp_path, f"src/app/{page_name}")
     assert _block(page) == ["- `main.py`: Boot the app."]
     assert _outside_block(page) == _outside_block(typed)
 
 
-def test_rerun_keeps_crlf_typed_bytes(tmp_path):  # 11
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_rerun_keeps_crlf_typed_bytes(tmp_path, page_name):  # 11
     _project(tmp_path)
-    pages.run(tmp_path)
-    page = tmp_path / "src/app/CLAUDE.md"
+    pages.run(tmp_path, page_name)
+    page = tmp_path / "src/app" / page_name
     page.write_bytes(page.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
     _write(tmp_path, "src/app/main.py", '"""Boot the app."""\n')
-    pages.run(tmp_path)
+    pages.run(tmp_path, page_name)
     raw = page.read_bytes()
     assert b"Boot the app." in raw
     assert raw.count(b"\n") == raw.count(b"\r\n")
 
 
-def test_rerun_keeps_mixed_line_endings_outside_block(tmp_path):  # 11
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_rerun_keeps_mixed_line_endings_outside_block(tmp_path, page_name):  # 11
     _project(tmp_path)
-    pages.run(tmp_path)
-    page = tmp_path / "src/app/CLAUDE.md"
+    pages.run(tmp_path, page_name)
+    page = tmp_path / "src/app" / page_name
     raw = page.read_bytes().replace(b"## Purpose\n", b"## Purpose\r\n")
     page.write_bytes(raw)
     _write(tmp_path, "src/app/main.py", '"""Boot the app."""\n')
-    pages.run(tmp_path)
+    pages.run(tmp_path, page_name)
     after = page.read_bytes()
     assert after.replace(b"Boot", b"Start") == raw
 
 
-def test_deleted_file_leaves_block(tmp_path):  # 12
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_deleted_file_leaves_block(tmp_path, page_name):  # 12
     _project(tmp_path)
     _write(tmp_path, "src/app/extra.py", '"""Extra helper."""\n')
-    pages.run(tmp_path)
-    assert len(_block(_read(tmp_path, "src/app/CLAUDE.md"))) == 2
+    pages.run(tmp_path, page_name)
+    assert len(_block(_read(tmp_path, f"src/app/{page_name}"))) == 2
     (tmp_path / "src/app/extra.py").unlink()
-    pages.run(tmp_path)
-    assert _block(_read(tmp_path, "src/app/CLAUDE.md")) == ["- `main.py`: Start the app."]
+    pages.run(tmp_path, page_name)
+    assert _block(_read(tmp_path, f"src/app/{page_name}")) == ["- `main.py`: Start the app."]
 
 
 def test_block_sorted_and_stable(tmp_path):  # 13
@@ -285,12 +294,13 @@ def test_block_sorted_and_stable(tmp_path):  # 13
     assert _block(_read(tmp_path, "src/CLAUDE.md")) == block
 
 
-def test_page_without_markers_skipped_untouched(tmp_path, capsys):  # 14
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_page_without_markers_skipped_untouched(tmp_path, capsys, page_name):  # 14
     _project(tmp_path)
-    _write(tmp_path, "src/app/CLAUDE.md", "# Hand-written\n\nKeep me.\n")
-    before = _bytes(tmp_path, "src/app/CLAUDE.md")
-    assert ("skipped", "src/app/CLAUDE.md") in pages.run(tmp_path)
-    assert _bytes(tmp_path, "src/app/CLAUDE.md") == before
+    _write(tmp_path, f"src/app/{page_name}", "# Hand-written\n\nKeep me.\n")
+    before = _bytes(tmp_path, f"src/app/{page_name}")
+    assert ("skipped", f"src/app/{page_name}") in pages.run(tmp_path, page_name)
+    assert _bytes(tmp_path, f"src/app/{page_name}") == before
 
 
 # ------------------------------------------------ rules a page meets (15-16)

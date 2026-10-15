@@ -249,10 +249,18 @@ def test_invalid_mode_rejected(tmp_path):  # 20
         _render(tmp_path, mode="shared")
 
 
-def test_local_mode_names_pass_4_and_writes_nothing(tmp_path, capsys):  # 21
-    assert _cli(tmp_path, _answers(mode="local")) == 1
-    assert "Pass 4" in capsys.readouterr().err
-    assert _files(tmp_path) == set()
+def test_local_mode_accepted_and_invalid_mode_fails_before_write(tmp_path, capsys):  # 21 (Pass 4, 20)
+    ok = tmp_path / "ok"
+    ok.mkdir()
+    assert _cli(ok, _answers(mode="local")) == 0
+    assert (ok / ".docs-local/README.md").is_file()
+    assert "not built yet" not in capsys.readouterr().err
+
+    bad = tmp_path / "bad"
+    bad.mkdir()
+    assert _cli(bad, _answers(mode="shared")) == 1
+    assert "mode" in capsys.readouterr().err
+    assert _files(bad) == set()
 
 
 def test_backend_key_rejected(tmp_path, capsys):  # 22

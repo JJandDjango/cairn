@@ -2,12 +2,13 @@
 
 A folder page holds the folder's purpose, one line per file and subfolder,
 local rules, and links. Claude Code loads it the first time a session reads
-a file in that folder. Zero third-party dependencies.
+a file in that folder. Local mode names the page CLAUDE.local.md instead.
+Zero third-party dependencies.
 
 Invoked two ways:
   1. By render.py, for code projects, after the spine is written, or
   2. Directly, to refresh pages after code changes:
-       python pages.py [--cwd DIR]
+       python pages.py [--cwd DIR] [--page CLAUDE.md|CLAUDE.local.md]
 
 Behavior:
   - Working folders: every folder below the root that holds a file, found
@@ -17,6 +18,9 @@ Behavior:
     folder, virtualenvs (a pyvenv.cfg at their root), and fixture, vendored
     and generated folders by name, in any case.
     A fixture folder gets one line in its parent's page instead.
+  - Page name: CLAUDE.md, or CLAUDE.local.md in local mode. A CLAUDE.md that
+    is already in a folder is never listed as a file, edited, or refreshed
+    when the page name is CLAUDE.local.md.
   - Docstrings: a Python module docstring, a leading `/** */` doc comment,
     or a Rust `//!` comment gives a file's line. Those lines live between
     the block markers, and only they are ever rewritten.
@@ -36,7 +40,8 @@ from pathlib import Path
 
 
 PAGE = "CLAUDE.md"
-PAGE_FILES = {PAGE, "CLAUDE.local.md"}
+LOCAL_PAGE = "CLAUDE.local.md"
+PAGE_FILES = {PAGE, LOCAL_PAGE}
 
 BLOCK_START = "<!-- cairn:files -->"
 BLOCK_END = "<!-- /cairn:files -->"
@@ -258,12 +263,12 @@ def _write(path: Path, text: str) -> None:
         f.write(text)
 
 
-def run(cwd: Path) -> list[tuple[str, str]]:
+def run(cwd: Path, page_name: str = PAGE) -> list[tuple[str, str]]:
     """Create missing pages and refresh blocks. Returns (action, page) pairs."""
     actions = []
     for parts, info in sorted(find_folders(cwd).items()):
         folder_path = cwd.joinpath(*parts)
-        page = folder_path / PAGE
+        page = folder_path / page_name
         rel = page.relative_to(cwd).as_posix()
         if not page.exists():
             _write(page, _new_page(parts, folder_path, info))
@@ -291,12 +296,18 @@ def report(actions: list[tuple[str, str]]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Write and refresh folder pages (a CLAUDE.md per working folder)."
+        description="Write and refresh folder pages (a CLAUDE.md or CLAUDE.local.md per working folder)."
     )
     parser.add_argument(
         "--cwd",
         default=".",
         help="Target project root (default: current directory).",
+    )
+    parser.add_argument(
+        "--page",
+        default=PAGE,
+        choices=sorted(PAGE_FILES),
+        help="Page name: CLAUDE.md, or CLAUDE.local.md for local mode (default: CLAUDE.md).",
     )
     args = parser.parse_args(argv)
 
@@ -305,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: not a directory: {cwd}", file=sys.stderr)
         return 1
 
-    actions = run(cwd)
+    actions = run(cwd, args.page)
     report(actions)
     if not actions:
         print("Every folder page is fresh.")
