@@ -5,30 +5,27 @@
 > _Generated 2026-10-14._
 
 ## Now
-- **Cairn 2.0 Pass 1 done.** PR #13 merged (`8a23103`), CI green on
-  Ubuntu and Windows. `render.py` writes the 2.0 spine: root `CLAUDE.md`
-  (imports README and ARCHITECTURE), `README.md`, `ARCHITECTURE.md`,
-  `CONTRIBUTING.md`, `CHANGELOG.md`, the ADR seed and template,
-  `docs/{recipe,feature,design}-template.md`, and an untracked
-  `CLAUDE.local.md`. The interview asks tracked or local mode. The graphify
-  backend is gone, with its code, tests and `docs/backend.md`.
-- **Rulings A-D** (in PR #13): the local note is root `CLAUDE.local.md`,
-  which tracked mode adds to `.gitignore` once; local mode exits 1 until
-  Pass 4; the 1.x templates stay only as the audit fixture
-  (`tests/spine_1x.py`) until Pass 6; docs templates are `*-template.md`.
+- **Cairn 2.0 Pass 2 done.** PR #15 merged (`7385454`), CI green on
+  Ubuntu and Windows. New `skills/cairn/pages.py` writes a `CLAUDE.md`
+  folder page in each working folder of a code project (Purpose, Files,
+  Rules, Links); docstring first lines (Python, leading `/** */`, Rust
+  `//!`) live between `<!-- cairn:files -->` markers, the only text a
+  rerun rewrites. `render.py` runs it for code; it also runs alone. The
+  `CONTRIBUTING.md` template states the mid-work handoff rule. Features
+  13, 14, 17 are green in `docs/usage-2.0.md`.
+- **Folder rulings (2026-10-14, in `docs/design-2.0.md`)**: virtualenvs
+  (`pyvenv.cfg`) count as vendored; root `decisions/` gets no page,
+  `docs/` does; every file in a paged folder gets a line, dotfiles too.
+- **Two-Key held**: verifier FAIL on attempt 1 (pages written into a
+  virtualenv), PASS on attempt 2; run as a one-agent workflow.
 - **Known gap until Pass 5**: `/cairn audit` checks the 1.x strata, so a
   fresh 2.0 project reports "no spine" (exit 2).
-- **PromptLang scope**: `*.md.template` files are never validated (the
-  validator collects `*.md` only) and stay unclaimed by design (ADR 0007);
-  only `SKILL.md` is claimed.
-- **The build plan** is `plan.md` at the repo root (untracked; read-only
-  copy at https://claude.ai/artifact/UQn9XXM4UxBTkfP9aZQmSM). Each pass:
-  test list for approval, build, independent verifier (Two-Key, run as a
-  one-agent workflow since no Task tool is present), PR, CI, merge.
+- **The build plan** is `plan.md` at the repo root (untracked). Each
+  pass: test list for approval, build, verifier, PR, CI, merge.
 - **Known audit warnings**: `BUDGET-ADR` on 0007 (accepted scar); three
   `CONV-SUPERSEDED` on CONVENTIONS.md, by design (Pass 7 retires it).
-- **Working style that held**: one ruling per question, recommendation
-  first; PR and artifact links reviewed on a phone.
+- **Session settings**: `promptCacheTtl: "1h"` in user settings; the
+  ccstatusline cache-timer widget set to 3600 s.
 - **Skill install is a junction** - `~/.claude/skills/cairn` ->
   `E:\cairn\skills\cairn`; remove it before the marketplace install-test.
 
@@ -36,17 +33,16 @@
 - None.
 
 ## Next actions
-1. **Pass 2, folder pages** (features 13, 14, 17): a page per working
-   folder, the docstring script and its marked block, the handoff line in
-   `CONTRIBUTING.md`. Open with the unit test list for approval.
-2. Passes 3-7 per `plan.md`; rule on feature 16 before Pass 3 and on
-   feature 29 before Pass 6.
+1. **Pass 3, status command** (features 15, 16): last done, next,
+   `needs-ruling`. Rule on feature 16's open item (pluggable "next"
+   source) first, then the unit test list for approval.
+2. Passes 4-7 per `plan.md`; rule on feature 29 before Pass 6.
 3. Before Pass 7 removes Cairn's own `STATE.md`: update the
    `resume-session`, `handoff-session` and `end-session` skills.
-4. Publish stays HELD (explicit go). Optional carry-overs:
-   `required_status_checks` on protect-main; drop `_v0` from test names;
-   `render.main` should reject `--answers` JSON that is not an object
-   (verifier nit, Pass 1).
+4. Deferred carry-overs (`plan.md`): Pass 2 verifier nits (`_safe`
+   single-pass strip, root-level `pyvenv.cfg` git vs non-git, no test for
+   `render.main`'s pages error exit); `--answers` non-object JSON;
+   `required_status_checks`; drop `_v0` from test names. Publish HELD.
 
 ## Open questions
 - Feature 16 (pluggable "next" source) and feature 29 (1.x migration
