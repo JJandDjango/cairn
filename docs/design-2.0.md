@@ -56,6 +56,16 @@ included.
 PRs), next (issues, or a project's own source) and what waits on the
 user (issues labelled `needs-ruling`). `ARCHITECTURE.md` names it. A
 handoff in the middle of a piece of work stays in that work's own folder.
+*Ruled 2026-10-14:* the command is `/cairn status`. `git config cairn.plan
+<path>` (relative to the repo root; writes no file) names a markdown file
+whose first unfinished top-level numbered step (not starting `~~` or
+`[x]`) replaces the issues under Next; the command never falls back to
+issues when the file is missing or fully done, and says why. Waiting on
+you always comes from `needs-ruling` issues. Sections hold 5 commits
+(`--no-merges`), 5 merged PRs, 5 open issues oldest first, and up to 10
+`needs-ruling` issues, and always print, `(none)` when empty. Exit 0
+whenever output prints, including `gh` missing or unauthenticated (each
+section states its reason); exit 1 only for a bad `--cwd` or a non-repo.
 
 ## Where things live
 
@@ -160,8 +170,6 @@ Each needs the user's ruling before the build:
   any name, such as `SUMMARY.md`, at no extra call; not built or tested.
 - Preloading a subagent's files from its prompt: the launching script
   inlines them, or a hook injects them; the hook route is not checked.
-- How a project that keeps its order of work outside issues plugs its
-  source into the status command.
 - Migration for spines already on 1.x (the user's deadlock-mod repo and
   work repo use the six files): what `/cairn` does on finding THEORY, MAP,
   STATE, CONVENTIONS and DOCS-SYSTEM, without clobbering authored text.

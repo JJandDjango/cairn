@@ -75,14 +75,31 @@ with no setting.
 **Handoffs.** A handoff in the middle of a piece of work stays in that
 work's own folder, never in a top-level file.
 
-## What's in flight: the status command 🔴 (15, 16)
+## What's in flight: the status command 🟢 (15, 16)
 
-*Code projects.* There is no `STATE.md`. Ask the status command instead;
-`ARCHITECTURE.md` names it. It prints:
+*Code projects.* There is no `STATE.md`. Run `/cairn status` instead;
+`ARCHITECTURE.md` names it. It prints three sections, each `(none)` when
+empty:
 
-- **Last done:** recent commits and merged PRs.
-- **Next:** open issues, or your project's own source of order of work.
-- **Waiting on you:** issues labelled `needs-ruling`.
+- **Last done:** the 5 newest commits (merges skipped) and 5 merged PRs.
+- **Next:** the 5 oldest open issues, or your plan file's next step.
+- **Waiting on you:** up to 10 issues labelled `needs-ruling`.
+
+It reads the PRs and issues with the `gh` CLI. Without `gh`, or when `gh`
+is not signed in, those lines say why and the commits still print.
+
+**Your own plan.** To take Next from a markdown file, name it, with a path
+from the repo root:
+
+```
+git config cairn.plan docs/plan.md
+```
+
+Next then shows the file's first unfinished step: a numbered item at the
+left margin (`1.` or `1)`). A step is done when its text starts with `~~`
+or `[x]`. Issues are never used while the setting is on; if the file is
+missing or every step is done, Next says so. The setting writes no file,
+so it works in local mode. Cairn never looks for a plan on its own.
 
 ## Local mode 🔴 (18-21)
 

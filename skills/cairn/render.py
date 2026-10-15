@@ -77,8 +77,8 @@ CODE_DIAGRAM_SECTION = (
     "\n"
 )
 
-# The status command ships in a later pass of the 2.0 build, which names it.
-CODE_STATUS_ROW = "| Last done, next, and what waits on you | The status command (to be named) |\n"
+# The status command (status.py), named in the code ARCHITECTURE.md.
+CODE_STATUS_ROW = "| Last done, next, and what waits on you | The status command, `/cairn status` |\n"
 
 
 def substitute(template_text: str, variables: dict) -> str:

@@ -1,6 +1,6 @@
 ---
 name: cairn
-description: Scaffold the short onboarding documents any project needs - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and tracked vs local mode, then renders root CLAUDE.md (imports README and ARCHITECTURE), README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md, decisions/ (append-only ADRs), docs/ templates (recipe, feature, design), and a local, untracked CLAUDE.local.md; code projects also get a CLAUDE.md folder page in each working folder, fed by docstrings. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only checker) and `/cairn maintain` (session-end routine). Use when starting, standardizing, or maintaining a project's documentation.
+description: Scaffold the short onboarding documents any project needs - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and tracked vs local mode, then renders root CLAUDE.md (imports README and ARCHITECTURE), README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md, decisions/ (append-only ADRs), docs/ templates (recipe, feature, design), and a local, untracked CLAUDE.local.md; code projects also get a CLAUDE.md folder page in each working folder, fed by docstrings. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only checker), `/cairn maintain` (session-end routine) and `/cairn status` (last done, next, waiting on you). Use when starting, standardizing, or maintaining a project's documentation.
 ---
 
 # `/cairn` - scaffold the onboarding documents
@@ -18,6 +18,7 @@ Runs in the target project's Claude Code session; cwd is the project. This
 skill's own directory holds the renderer, the auditor, and templates:
   {skill-dir}/render.py
   {skill-dir}/pages.py               (folder pages for code; render.py runs it)
+  {skill-dir}/status.py              (last done, next, waiting on you; read-only)
   {skill-dir}/audit.py               (zero-dep spine checker, report-only)
   {skill-dir}/templates/*.template   (plus templates/decisions/)
 
@@ -40,6 +41,7 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
 0. DISPATCH. If this skill was invoked with a first argument naming a subcommand, do NOT run the interview:
    - `audit` - CORE, zero-dep: go to the audit-subcommand section.
    - `maintain` - CORE, the session-end routine: go to the maintain-subcommand section.
+   - `status` - code projects, read-only: go to the status-subcommand section.
    Otherwise (no args, or a scaffold / `init` intent) run the interview scaffold, steps 1-7. When the invocation text itself supplies interview answers (a charter- or script-driven run), treat them as interview-equivalent - steps 2-4 ask only for what is missing.
 
 1. CONFIRM the target directory. Default to cwd. Run `git rev-parse --show-toplevel` via Bash; if it succeeds and differs from cwd, ASK the user (AskUserQuestion) whether to target the git root or cwd. If it is not a git repo, that is fine - proceed with cwd. NEVER refuse for lack of git.
@@ -94,6 +96,18 @@ checklist, executable. Report-only: it never writes anything.
    automates detection; the touches stay with the user (or `/cairn maintain`).
 </audit-subcommand>
 
+<status-subcommand>
+`/cairn status` prints what is in flight, derived from git and GitHub.
+Read-only: it never writes anything.
+
+1. RUN - one Bash call, by absolute path:
+       python "{skill-dir}/status.py" --cwd .
+2. REPORT stdout verbatim. Exit 0 = output printed (a section may say why it
+   is empty, such as gh not installed). Exit 1 = not a directory or not a git
+   repo: tell the user. To take Next from a markdown plan, the user runs
+   `git config cairn.plan PATH` (PATH from the repo root); do NOT set it unasked.
+</status-subcommand>
+
 <maintain-subcommand>
 `/cairn maintain` is the session-end routine: automate the DETECTION, keep the
 authorship human-reviewed. The agent performs the day-2 touches for what this
@@ -136,6 +150,7 @@ session actually changed; every write lands uncommitted for the user's review.
 - Do NOT author docs/ pages up front. The scaffold writes only the recipe, feature and design templates; real pages are authored on touch.
 - Do NOT commit CLAUDE.local.md. It holds this machine's paths and tools only.
 - `audit` is core and report-only: never "fix" its findings unasked.
+- `status` is report-only: never set `cairn.plan` or edit a plan file unasked.
 - `maintain` writes ONLY MAP.md, docs/, and STATE.md. THEORY.md, CONVENTIONS.md, and existing decisions/ records are flag-only; a new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
 </constraints>
 
@@ -148,5 +163,6 @@ session actually changed; every write lands uncommitted for the user's review.
 - [ ] Spine files present at target (or reported skipped where pre-existing); nothing overwritten.
 - [ ] Outcome + next steps reported to the user.
 - [ ] If invoked as `audit`: audit.py ran by absolute path; findings reported verbatim; nothing was written.
+- [ ] If invoked as `status`: status.py ran by absolute path; stdout reported verbatim; nothing was written.
 - [ ] If invoked as `maintain`: every touch grounded in observed changes; THEORY.md, CONVENTIONS.md, and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
 </criteria>
