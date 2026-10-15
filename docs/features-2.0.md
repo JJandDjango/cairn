@@ -37,7 +37,9 @@ Lines marked *(open)* depend on a question the design leaves open.
 15. Status command: last done (git log, merged PRs), next (issues), and
     waiting on the user (issues labelled `needs-ruling`).
 16. A pluggable source for "next," for projects that keep their order of
-    work outside issues. *(open)*
+    work outside issues. *Ruled 2026-10-14:* `git config cairn.plan` names
+    a markdown file; its first unfinished numbered step is Next; issues
+    stay the default.
 17. `CONTRIBUTING.md` template states that a mid-work handoff stays in
     that work's own folder.
 
