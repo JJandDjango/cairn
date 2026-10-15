@@ -32,6 +32,7 @@ Outputs (into the target dir; none overwritten if already present):
   decisions/0001-record-architecture-decisions.md - decisions/ADR-template.md
   docs/recipe-template.md - docs/feature-template.md - docs/design-template.md
   .gitignore  (tracked mode: + CLAUDE.local.md, once)
+  .github/workflows/cairn-audit.yml  (tracked mode: runs the audit on every PR)
 
 Local mode writes nothing tracked. The same set (without the root CLAUDE.md)
 goes under .docs-local/, with a .gitignore of `*`; one root CLAUDE.local.md
@@ -40,8 +41,9 @@ pages are CLAUDE.local.md. CLAUDE.local.md is added once to the git exclude
 file (skipped outside git, with one line saying so). The root .gitignore is
 never touched.
 
-Build status: audit and maintain still check the 1.x six-strata spine until
-the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
+Build status: audit and maintain handle both spines. A 2.0 spine
+(ARCHITECTURE.md at the root or in .docs-local/) gets the 2.0 checks; a 1.x
+six-strata spine keeps the 1.x checks until the 2.0 build retires them.
 </context>
 
 <instructions>
@@ -93,18 +95,25 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
    with `python {skill-dir}/pages.py --page CLAUDE.local.md`), and the
    renderer's `git clean -x` caution line is repeated to the user. If a root
    CLAUDE.local.md already existed, the renderer lists the two import lines
-   to add; relay them. If render failed, REPORT the stderr and EXIT.
+   to add; relay them. In tracked mode, say that
+   .github/workflows/cairn-audit.yml runs the audit on every PR and clones
+   the cairn repo, which the runner must be able to read. If render failed,
+   REPORT the stderr and EXIT.
 </instructions>
 
 <audit-subcommand>
-`/cairn audit` runs the zero-dependency spine checker - the DOCS-SYSTEM audit
-checklist, executable. Report-only: it never writes anything.
+`/cairn audit` runs the zero-dependency checker. Report-only: it never writes
+anything. It checks a 2.0 spine (tracked or local) and a 1.x spine alike.
 
 1. RUN - one Bash call, by absolute path:
        python "{skill-dir}/audit.py" --cwd .
-2. REPORT stdout verbatim. Exit 0 = clean; exit 1 = findings, each carrying a
-   code (e.g. MAP-DOC-MISSING, STATE-STALE, DOCS-STALE); exit 2 = no spine here
-   (offer the scaffold interview instead). Do NOT fix findings unasked - audit
+2. REPORT stdout verbatim. Exit 0 = clean; exit 1 = at least one finding, in
+   both modes, each carrying a code. A 2.0 spine gives SIZE-BUDGET, AT-IMPORT,
+   LINK-BROKEN, GEN-STALE, COVER-PAGE or COVER-FILE; a 1.x spine gives its own
+   (MAP-DOC-MISSING, STATE-STALE, DOCS-STALE). Exit 2 = no spine here (offer
+   the scaffold interview instead). Folder checks apply to a code project,
+   read from the `/cairn status` row in ARCHITECTURE.md, even with no pages.
+   Do NOT fix findings unasked - audit
    automates detection; the touches stay with the user (or `/cairn maintain`).
 </audit-subcommand>
 
@@ -125,6 +134,42 @@ Read-only: it never writes anything.
 authorship human-reviewed. The agent performs the day-2 touches for what this
 session actually changed; every write lands uncommitted for the user's review.
 
+Pick the branch by the spine. ARCHITECTURE.md at the root or in .docs-local/
+means 2.0: follow the 2.0 steps. Otherwise DOCS-SYSTEM.md, or THEORY.md with
+MAP.md, means 1.x: follow the 1.x steps. Neither: offer the scaffold interview
+and end maintain there.
+
+2.0 steps (there is no STATE.md; never create or regenerate one):
+1. AUDIT (before) - one Bash call:
+       python "{skill-dir}/audit.py" --cwd . --format json
+   Collect the findings.
+2. REFRESH the generated lines - one Bash call, for a project with folder
+   pages:
+       python "{skill-dir}/pages.py" --cwd .
+   Add `--page CLAUDE.local.md` in local mode. It rewrites only the
+   cairn:files blocks and creates pages for new folders.
+3. GATHER what actually changed this session. In a git repo run
+   `git status --porcelain` (one Bash call) and `git diff --stat` (another);
+   otherwise ASK the user for a one-line summary of the session's work.
+4. TOUCH the pages for what changed - the audit's COVER-FILE and COVER-PAGE
+   findings, and the observed changes, say where:
+   - a folder page: type the purpose, the line for each new undocumented file,
+     and the rules; fix a line a rename or removal left behind.
+   - ARCHITECTURE.md: a folder-map row for each top-level folder added,
+     removed or renamed; an invariant only when the user states it.
+   - README.md and CONTRIBUTING.md: only what the changes plainly alter.
+   Stay inside the size budgets. NEVER invent or embellish beyond the
+   observed changes; when unsure, ask.
+5. FLAG decision-shaped changes - never edit an existing decisions/*.md. If a
+   future session would ask "why is it done this way?", ASK (AskUserQuestion)
+   whether to draft a new ADR from decisions/ADR-template.md; draft ONLY on an
+   explicit yes.
+6. AUDIT (after) - one Bash call:
+       python "{skill-dir}/audit.py" --cwd .
+   REPORT before -> after findings plus every file touched. Do NOT commit -
+   the user reviews and commits.
+
+1.x steps (until the 2.0 build retires the six strata):
 1. AUDIT (before) - one Bash call:
        python "{skill-dir}/audit.py" --cwd . --format json
    Collect the findings. Exit 2 = no spine: offer the scaffold interview and end
@@ -163,7 +208,7 @@ session actually changed; every write lands uncommitted for the user's review.
 - Do NOT commit CLAUDE.local.md. It holds this machine's paths and tools only.
 - `audit` is core and report-only: never "fix" its findings unasked.
 - `status` is report-only: never set `cairn.plan` or edit a plan file unasked.
-- `maintain` writes ONLY MAP.md, docs/, and STATE.md. THEORY.md, CONVENTIONS.md, and existing decisions/ records are flag-only; a new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
+- `maintain` on a 2.0 spine writes ONLY the generated blocks (through pages.py), folder pages, and the top pages the session's changes alter; it never creates STATE.md and never edits an existing decisions/ record. On a 1.x spine it writes ONLY MAP.md, docs/, and STATE.md; THEORY.md, CONVENTIONS.md, and existing decisions/ records are flag-only. A new ADR requires the user's explicit yes. Every touch must be grounded in the session's observed changes, and nothing is ever committed by the skill.
 </constraints>
 
 <criteria>
@@ -174,7 +219,8 @@ session actually changed; every write lands uncommitted for the user's review.
 - [ ] Answers parsed to valid JSON; render.py invoked; exit 0.
 - [ ] Spine files present at target (or reported skipped where pre-existing); nothing overwritten.
 - [ ] Outcome + next steps reported to the user.
-- [ ] If invoked as `audit`: audit.py ran by absolute path; findings reported verbatim; nothing was written.
+- [ ] If invoked as `audit`: audit.py ran by absolute path; findings reported verbatim, exit 1 named as a failure; nothing was written.
 - [ ] If invoked as `status`: status.py ran by absolute path; stdout reported verbatim; nothing was written.
-- [ ] If invoked as `maintain`: every touch grounded in observed changes; THEORY.md, CONVENTIONS.md, and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
+- [ ] If invoked as `maintain` on a 2.0 spine: audit ran, pages.py refreshed the generated lines, pages touched only for observed changes, no STATE.md created, existing ADRs untouched, before->after audit reported, nothing committed.
+- [ ] If invoked as `maintain` on a 1.x spine: every touch grounded in observed changes; THEORY.md, CONVENTIONS.md, and existing ADRs untouched (flagged / asked only); STATE.md regenerated with today's stamp; before->after audit reported; nothing committed.
 </criteria>

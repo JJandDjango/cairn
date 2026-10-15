@@ -24,7 +24,10 @@ Behavior:
   - project_type=code -> ARCHITECTURE.md gains the one diagram and the
     status-command row; every other type gets the same spine without them.
   - adoption=brownfield -> intent rendered with an `(inferred - confirm)` tag.
-  - mode=tracked -> .gitignore gains `CLAUDE.local.md` once.
+  - mode=tracked -> .gitignore gains `CLAUDE.local.md` once, and every
+    project type gets .github/workflows/cairn-audit.yml, which runs audit.py
+    on each pull request (a shallow clone of the cairn repo at one pinned
+    ref). Local mode writes nothing under .github/.
   - project_type=code -> pages.py then writes a folder page (CLAUDE.md) in
     each working folder and refreshes the docstring lines in existing ones.
   - mode=local -> nothing tracked is written. The spine goes under
@@ -51,6 +54,9 @@ from pathlib import Path
 import pages
 
 
+# The CI job that runs audit.py on every PR; written in tracked mode only.
+WORKFLOW_TARGET = ".github/workflows/cairn-audit.yml"
+
 TEMPLATE_TO_TARGET = {
     "CLAUDE.md.template": "CLAUDE.md",
     "README.md.template": "README.md",
@@ -63,6 +69,7 @@ TEMPLATE_TO_TARGET = {
     "docs/recipe-template.md.template": "docs/recipe-template.md",
     "docs/feature-template.md.template": "docs/feature-template.md",
     "docs/design-template.md.template": "docs/design-template.md",
+    "cairn-audit.yml.template": WORKFLOW_TARGET,
 }
 
 REQUIRED_ANSWER_KEYS = {"project_name", "intent", "project_type", "adoption", "mode"}
@@ -81,7 +88,7 @@ LOCAL_ROOT_TEMPLATE = "CLAUDE.local-root.md.template"
 LOCAL_TEMPLATE_TO_TARGET = {
     template: f"{LOCAL_DIR}/{target}"
     for template, target in TEMPLATE_TO_TARGET.items()
-    if target not in {"CLAUDE.md", LOCAL_NOTE}
+    if target not in {"CLAUDE.md", LOCAL_NOTE, WORKFLOW_TARGET}
 }
 LOCAL_TEMPLATE_TO_TARGET[LOCAL_ROOT_TEMPLATE] = LOCAL_NOTE
 LOCAL_IMPORTS = (f"@{LOCAL_DIR}/README.md", f"@{LOCAL_DIR}/ARCHITECTURE.md")

@@ -364,6 +364,28 @@ def test_git_and_non_git_give_same_pages(tmp_path):  # 18
     assert set(pages_of(plain)) == {"src/CLAUDE.md", "src/app/CLAUDE.md", "tests/CLAUDE.md"}
 
 
+# ------------------------------------------- the plan step (Pass 5, 16)
+
+@pytest.mark.parametrize("page_name", PAGE_NAMES)
+def test_plan_is_exactly_what_run_performs_and_writes_nothing(tmp_path, page_name):  # Pass 5, 16
+    def snapshot():
+        return {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+
+    _project(tmp_path)
+    _write(tmp_path, f"src/app/{page_name}", "# Hand-written\n")
+    _write(tmp_path, f"tests/{page_name}", "# mine\n\n"
+           f"{pages.BLOCK_START}\n- `gone.py`: Removed.\n{pages.BLOCK_END}\n")
+    before = snapshot()
+    planned = pages.plan(tmp_path, page_name)
+    assert snapshot() == before
+    assert sorted(a for a, _ in planned) == ["created", "skipped", "updated"]
+
+    assert pages.run(tmp_path, page_name) == planned
+    again = [("skipped", f"src/app/{page_name}")]   # the hand-written page stays
+    assert pages.plan(tmp_path, page_name) == again
+    assert pages.run(tmp_path, page_name) == again
+
+
 # ----------------------------------------------------------------- CLI (19)
 
 def test_cli_output_and_exit_codes(tmp_path, capsys):  # 19

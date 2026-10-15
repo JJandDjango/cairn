@@ -1,4 +1,4 @@
-"""Audit a Cairn documentation spine - the DOCS-SYSTEM checklist, executable.
+"""Audit a Cairn documentation spine - the 2.0 checks and the 1.x checklist.
 
 Deterministic, REPORT-ONLY: audit never writes, creates, or modifies anything.
 It automates the *detection* half of day-2 upkeep (what is stale, missing, or
@@ -15,9 +15,38 @@ Invoked two ways:
 Exit codes:
   0 - clean (INFO findings allowed)
   1 - at least one WARN or ERROR finding
-  2 - not a Cairn spine (no DOCS-SYSTEM.md and no THEORY.md+MAP.md), or bad usage
+  2 - not a Cairn spine (no ARCHITECTURE.md, no DOCS-SYSTEM.md and no
+      THEORY.md+MAP.md), or bad usage
 
-Finding codes:
+Two spines, detected by file:
+  - 2.0: ARCHITECTURE.md in .docs-local/ (local mode, which wins when both
+    exist) or at the root (tracked mode). Local mode reads the top pages in
+    .docs-local/ and folder pages named CLAUDE.local.md; tracked mode reads
+    the root files and folder pages named CLAUDE.md.
+  - 1.x: DOCS-SYSTEM.md, or THEORY.md with MAP.md. Its checks are below.
+A folder with both runs both sets of checks.
+
+2.0 finding codes (all ERROR, so any one gives exit 1):
+  SIZE-BUDGET   a file is over budget, in bytes (1 KB = 1024): README 2048,
+                ARCHITECTURE 3072, CONTRIBUTING 3072, a folder page 2048; the
+                tracked root CLAUDE.md may hold 10 lines
+  AT-IMPORT     an import-shaped @ (one that starts a word) outside code, in
+                README, ARCHITECTURE or a folder page; reports the line
+  LINK-BROKEN   a relative link in a top page or folder page whose target
+                file or folder does not exist (anchors stripped; external,
+                mailto, #-only and in-code links are skipped)
+  GEN-STALE     a folder page's generated block differs from what pages.py
+                would write now; a page with no block markers is one INFO,
+                since its lines cannot be verified
+  COVER-PAGE    a working folder has no page
+  COVER-FILE    a file in a paged folder has no line in its page
+Folder checks run for a code project, known from ARCHITECTURE.md (it holds
+the `/cairn status` table row, which render.py writes for code only), so a code
+project whose pages were never made or were deleted still gets COVER-PAGE.
+When that row is absent, they run only if at least one folder page exists.
+A project with neither (a novel, a business plan) has no folder checks.
+
+1.x finding codes:
   SPINE-MISSING    a stratum file/directory is absent
   MAP-DOC-MISSING  a MAP row's Deep-doc cell links a file that does not exist
   DOCS-ORPHAN      a docs/ page no MAP row references                    (INFO)
@@ -54,6 +83,10 @@ import sys
 from collections import namedtuple
 from datetime import date
 from pathlib import Path
+from urllib.parse import unquote
+
+import pages
+import render
 
 # The size-budget proxy: one "page" of markdown as raw line count (generous, so
 # only real overruns warn). Budgets: THEORY/STATE 1 page, MAP 2, each ADR 1/2.
@@ -455,6 +488,210 @@ def check_docs_staleness(cwd: Path, use_git: bool) -> list[Finding]:
     return findings
 
 
+# --------------------------------------------------------------- 2.0 checks
+
+# Byte budgets, 1 KB = 1024; the root CLAUDE.md is held to lines instead.
+TOP_BUDGETS = {"README.md": 2048, "ARCHITECTURE.md": 3072, "CONTRIBUTING.md": 3072}
+PAGE_BUDGET = 2048
+ROOT_LINE_BUDGET = 10
+
+# Top pages scanned for an @ import: CONTRIBUTING.md is read on demand and the
+# root importer holds the imports by design, so neither is scanned.
+AT_SCANNED = ("README.md", "ARCHITECTURE.md")
+
+# Present in ARCHITECTURE.md only for a code project: it is in render.py's
+# CODE_STATUS_ROW, which is written for project_type code alone.
+STATUS_MARKER = "/cairn status"
+
+AT_IMPORT = re.compile(r"(?<![\w@])@([\w./~-]+)")
+MD_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+[^)]*)?\)")
+SCHEME = re.compile(r"[a-zA-Z][a-zA-Z0-9+.-]*:")
+
+
+def spine_mode(cwd: Path) -> str | None:
+    """'local' or 'tracked' when a 2.0 spine is here, else None."""
+    if (cwd / render.LOCAL_DIR / "ARCHITECTURE.md").is_file():
+        return "local"
+    if (cwd / "ARCHITECTURE.md").is_file():
+        return "tracked"
+    return None
+
+
+def _read_or_none(p: Path) -> str | None:
+    try:
+        return p.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _blank(text: str) -> str:
+    """Spaces in place of every character but the newlines."""
+    return re.sub(r"[^\r\n]", " ", text)
+
+
+def _outside_code(text: str, inline: bool = True) -> str:
+    """The text with fenced blocks and, when inline is true, inline code
+    blanked. Newlines stay, so a line number in the result is the line number
+    in the file."""
+    out = []
+    fence = None
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        if fence:
+            if stripped.startswith(fence):
+                fence = None
+            out.append(_blank(line))
+        elif stripped.startswith(("```", "~~~")):
+            fence = stripped[:3]
+            out.append(_blank(line))
+        elif inline:
+            out.append(re.sub(r"(`+).+?\1", lambda m: _blank(m.group(0)), line))
+        else:
+            out.append(line)
+    return "".join(out)
+
+
+def is_code_project(top: Path) -> bool:
+    """True when ARCHITECTURE.md in top carries the status-command table row
+    that render.py writes only for a code project. A table line outside a
+    fenced block counts; a prose or inline-code mention does not (the row's
+    command sits in inline code, so only fences are blanked)."""
+    text = _read_or_none(top / "ARCHITECTURE.md")
+    if text is None:
+        return False
+    return any(line.lstrip().startswith("|") and STATUS_MARKER in line
+               for line in _outside_code(text, inline=False).splitlines())
+
+
+def _check_size(rel: str, size: int, limit: int) -> list[Finding]:
+    if size > limit:
+        return [Finding("ERROR", "SIZE-BUDGET",
+                        f"{size} bytes exceeds the {limit}-byte budget", rel)]
+    return []
+
+
+def _check_at(rel: str, text: str) -> list[Finding]:
+    findings = []
+    for number, line in enumerate(_outside_code(text).splitlines(), 1):
+        for m in AT_IMPORT.finditer(line):
+            findings.append(Finding("ERROR", "AT-IMPORT",
+                                    f"line {number}: '@{m.group(1)}' outside code would "
+                                    f"load as an import - put it in code or drop the @",
+                                    rel))
+    return findings
+
+
+def _check_links(cwd: Path, source: Path, text: str) -> list[Finding]:
+    findings = []
+    visible = re.sub(r"<!--.*?-->", "", _outside_code(text), flags=re.DOTALL)
+    for m in MD_LINK.finditer(visible):
+        target = m.group(1)
+        if target.startswith(("#", "//")) or SCHEME.match(target):
+            continue
+        path_part = unquote(target.split("#")[0].split("?")[0])
+        if not path_part:
+            continue
+        base = cwd if path_part.startswith("/") else source.parent
+        if not (base / path_part.lstrip("/")).exists():
+            findings.append(Finding("ERROR", "LINK-BROKEN",
+                                    f"link '{target}' does not resolve",
+                                    source.relative_to(cwd).as_posix()))
+    return findings
+
+
+def _has_line(page_text: str, name: str) -> bool:
+    """True when the page names the file as a whole token, in a block line or
+    a typed one. Hint comments are ignored."""
+    visible = re.sub(r"<!--.*?-->", "", page_text, flags=re.DOTALL)
+    return re.search(r"(?<![\w./-])" + re.escape(name) + r"(?![\w-]|\.\w)", visible) is not None
+
+
+def check_folder_pages(cwd: Path, page_name: str, is_code: bool = False) -> list[Finding]:
+    """Budget, @ and link checks on folder pages, then freshness and coverage.
+
+    The checks run for a code project (is_code, read from ARCHITECTURE.md) or,
+    failing that, when at least one folder page exists.
+
+    pages.plan() supplies the freshness and missing-page findings, so the audit
+    and the refresh script can never disagree about what is stale.
+    """
+    folders = pages.find_folders(cwd)
+    present = {parts: cwd.joinpath(*parts) / page_name for parts in folders}
+    present = {parts: p for parts, p in present.items() if p.is_file()}
+    if not present and not is_code:
+        return []
+
+    findings: list[Finding] = []
+    texts: dict[Path, str | None] = {}
+    for parts, page in sorted(present.items()):
+        rel = page.relative_to(cwd).as_posix()
+        text = _read_or_none(page)
+        texts[page] = text
+        findings += _check_size(rel, page.stat().st_size, PAGE_BUDGET)
+        if text is not None:
+            findings += _check_at(rel, text)
+            findings += _check_links(cwd, page, text)
+
+    for action, rel in pages.plan(cwd, page_name):
+        if action == "created":
+            folder = Path(rel).parent.as_posix()
+            findings.append(Finding("ERROR", "COVER-PAGE",
+                                    f"working folder has no page (run pages.py to "
+                                    f"write {rel})", folder))
+        elif action == "updated":
+            findings.append(Finding("ERROR", "GEN-STALE",
+                                    "generated lines differ from the docstrings - "
+                                    "run pages.py", rel))
+        else:
+            findings.append(Finding("INFO", "GEN-STALE",
+                                    "no cairn:files block, so its generated lines "
+                                    "cannot be verified", rel))
+
+    for parts, page in sorted(present.items()):
+        text = texts[page]
+        if text is None:
+            continue
+        rel = page.relative_to(cwd).as_posix()
+        for name in sorted(folders[parts]["files"]):
+            if not _has_line(text, name):
+                findings.append(Finding("ERROR", "COVER-FILE",
+                                        f"'{name}' has no line in the page", rel))
+    return findings
+
+
+def run_checks(cwd: Path, mode: str) -> list[Finding]:
+    """The 2.0 checks for one spine. mode is 'tracked' or 'local'."""
+    local = mode == "local"
+    top = cwd / render.LOCAL_DIR if local else cwd
+    findings: list[Finding] = []
+
+    for name in TOP_BUDGETS:
+        p = top / name
+        if not p.is_file():
+            continue
+        rel = p.relative_to(cwd).as_posix()
+        findings += _check_size(rel, p.stat().st_size, TOP_BUDGETS[name])
+        text = _read_or_none(p)
+        if text is None:
+            continue
+        if name in AT_SCANNED:
+            findings += _check_at(rel, text)
+        findings += _check_links(cwd, p, text)
+
+    if not local:
+        root_page = _read_or_none(cwd / pages.PAGE)
+        if root_page is not None:
+            n = len(root_page.splitlines())
+            if n > ROOT_LINE_BUDGET:
+                findings.append(Finding("ERROR", "SIZE-BUDGET",
+                                        f"{n} lines exceeds the {ROOT_LINE_BUDGET}-line "
+                                        f"budget", pages.PAGE))
+
+    findings += check_folder_pages(cwd, pages.LOCAL_PAGE if local else pages.PAGE,
+                                   is_code_project(top))
+    return findings
+
+
 # -------------------------------------------------------------------- driver
 
 def run_audit(cwd: Path) -> list[Finding]:
@@ -524,12 +761,19 @@ def main(argv: list[str] | None = None) -> int:
 
     has_docs_system = (cwd / "DOCS-SYSTEM.md").is_file()
     has_theory_map = (cwd / "THEORY.md").is_file() and (cwd / "MAP.md").is_file()
-    if not has_docs_system and not has_theory_map:
-        print(f"ERROR: no Cairn spine at {cwd} (no DOCS-SYSTEM.md, no THEORY.md+MAP.md) "
-              f"- run /cairn first", file=sys.stderr)
+    has_1x = has_docs_system or has_theory_map
+    mode = spine_mode(cwd)
+    if not has_1x and mode is None:
+        print(f"ERROR: no Cairn spine at {cwd} (no ARCHITECTURE.md, no DOCS-SYSTEM.md, "
+              f"no THEORY.md+MAP.md) - run /cairn first", file=sys.stderr)
         return 2
 
-    findings = run_audit(cwd)
+    findings: list[Finding] = []
+    if has_1x:
+        findings += run_audit(cwd)
+    if mode is not None:
+        findings += run_checks(cwd, mode)
+    findings.sort(key=lambda f: (SEVERITY_RANK[f.severity], f.code, f.path, f.message))
     print(report_text(cwd, findings) if args.format == "text" else report_json(cwd, findings))
     s = _summary(findings)
     return 1 if (s["errors"] or s["warnings"]) else 0

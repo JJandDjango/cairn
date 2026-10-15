@@ -31,6 +31,7 @@ SPINE_2_0 = {
     "docs/recipe-template.md",
     "docs/feature-template.md",
     "docs/design-template.md",
+    ".github/workflows/cairn-audit.yml",
 }
 STRATA_1X = {"THEORY.md", "MAP.md", "STATE.md", "CONVENTIONS.md", "DOCS-SYSTEM.md"}
 NONCODE_TYPES = ["novel", "content-site", "business", "research"]
