@@ -10,6 +10,9 @@ Invoked two ways:
   2. Directly, to refresh pages after code changes:
        python pages.py [--cwd DIR] [--page CLAUDE.md|CLAUDE.local.md]
 
+audit.py imports plan(), which returns the actions run() would perform and
+writes nothing: it is how the audit finds a stale block or a missing page.
+
 Behavior:
   - Working folders: every folder below the root that holds a file, found
     with `git ls-files` in a git repo (so git-ignored folders get no page),
@@ -27,6 +30,7 @@ Behavior:
   - Every other file gets a starter line outside the block when the page is
     created; from then on that line is typed, and the script never touches it.
   - An existing CLAUDE.md without the block markers is skipped, never edited.
+  - plan() and run() share one routine, so the plan is exactly what run does.
 """
 
 from __future__ import annotations
@@ -263,28 +267,44 @@ def _write(path: Path, text: str) -> None:
         f.write(text)
 
 
-def run(cwd: Path, page_name: str = PAGE) -> list[tuple[str, str]]:
-    """Create missing pages and refresh blocks. Returns (action, page) pairs."""
-    actions = []
+def _steps(cwd: Path, page_name: str) -> list[tuple[str, str, Path, str | None]]:
+    """What a run does, without writing: (action, rel, page path, new text).
+
+    The text is None for a skipped page, which is never written.
+    """
+    steps = []
     for parts, info in sorted(find_folders(cwd).items()):
         folder_path = cwd.joinpath(*parts)
         page = folder_path / page_name
         rel = page.relative_to(cwd).as_posix()
         if not page.exists():
-            _write(page, _new_page(parts, folder_path, info))
-            actions.append(("created", rel))
+            steps.append(("created", rel, page, _new_page(parts, folder_path, info)))
             continue
         try:
             raw = _read(page)
         except (OSError, UnicodeDecodeError):
-            actions.append(("skipped", rel))
+            steps.append(("skipped", rel, page, None))
             continue
         refreshed = _refresh(raw, _block_lines(folder_path, info))
         if refreshed is None:
-            actions.append(("skipped", rel))
+            steps.append(("skipped", rel, page, None))
         elif refreshed != raw:
-            _write(page, refreshed)
-            actions.append(("updated", rel))
+            steps.append(("updated", rel, page, refreshed))
+    return steps
+
+
+def plan(cwd: Path, page_name: str = PAGE) -> list[tuple[str, str]]:
+    """The (action, page) pairs run() would perform. Writes nothing."""
+    return [(action, rel) for action, rel, _, _ in _steps(cwd, page_name)]
+
+
+def run(cwd: Path, page_name: str = PAGE) -> list[tuple[str, str]]:
+    """Create missing pages and refresh blocks. Returns (action, page) pairs."""
+    actions = []
+    for action, rel, page, text in _steps(cwd, page_name):
+        if text is not None:
+            _write(page, text)
+        actions.append((action, rel))
     return actions
 
 

@@ -1,0 +1,27 @@
+# Written by /cairn. Fails a pull request when the project's documents drift:
+# size budgets, @ imports, broken links, stale generated lines, coverage.
+# The runner clones the cairn repo, so that repo must be readable by it.
+name: cairn-audit
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # The one place to pin the cairn version: a branch or a tag.
+  CAIRN_REF: main
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Fetch cairn
+        run: git clone --depth 1 --branch $CAIRN_REF https://github.com/JJandDjango/cairn $RUNNER_TEMP/cairn
+      - name: Audit
+        run: python $RUNNER_TEMP/cairn/skills/cairn/audit.py --cwd .

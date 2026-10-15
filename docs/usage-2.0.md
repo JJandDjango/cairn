@@ -116,7 +116,7 @@ exists, Cairn keeps it and prints the two import lines to add.
 
 **Caution:** `git clean -x` deletes all of it. Every local run prints this.
 
-## Checks: `/cairn audit` 🔴 (22-27)
+## Checks: `/cairn audit` 🟢 (22-27)
 
 Report-only. Exits 1 on any failure, in both modes.
 
@@ -129,9 +129,14 @@ Report-only. Exits 1 on any failure, in both modes.
 5. Every folder that needs a page has one, and every file there has its
    line.
 
-In tracked mode, a CI workflow template runs the audit on every PR.
+Folder-page checks apply to code projects. The audit reads the type from
+`ARCHITECTURE.md` (the `/cairn status` row), so a code project with no
+pages still fails for the missing ones. Without that row, the checks run
+only if a folder page exists. In tracked mode, Cairn writes `.github/workflows/cairn-audit.yml`,
+which runs the audit on every PR. It clones the Cairn repo at one pinned
+ref, set once at the top of the file.
 
-## Session end: `/cairn maintain` 🔴 (28)
+## Session end: `/cairn maintain` 🟢 (28)
 
 Your agent runs the audit, refreshes generated lines, and touches the
 pages for what the session changed. Every edit stays uncommitted for your
