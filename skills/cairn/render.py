@@ -24,6 +24,8 @@ Behavior:
     status-command row; every other type gets the same spine without them.
   - adoption=brownfield -> intent rendered with an `(inferred - confirm)` tag.
   - mode=tracked -> .gitignore gains `CLAUDE.local.md` once.
+  - project_type=code -> pages.py then writes a folder page (CLAUDE.md) in
+    each working folder and refreshes the docstring lines in existing ones.
   - NO-CLOBBER: any target that already exists is skipped and reported, never
     overwritten (safe to run on a partly-documented project).
 """
@@ -36,6 +38,8 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
+
+import pages
 
 
 TEMPLATE_TO_TARGET = {
@@ -229,6 +233,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"skipped  {f.relative_to(cwd)}  (exists)")
     if gitignore_modified:
         print("updated  .gitignore")
+
+    if answers["project_type"] == "code":
+        try:
+            pages.report(pages.run(cwd))
+        except OSError as exc:
+            print(f"ERROR: folder pages failed: {exc}", file=sys.stderr)
+            return 1
 
     if not created:
         print("\nNothing new to create - every spine file already exists.")

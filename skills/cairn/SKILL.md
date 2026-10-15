@@ -1,6 +1,6 @@
 ---
 name: cairn
-description: Scaffold the short onboarding documents any project needs - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and tracked vs local mode, then renders root CLAUDE.md (imports README and ARCHITECTURE), README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md, decisions/ (append-only ADRs), docs/ templates (recipe, feature, design), and a local, untracked CLAUDE.local.md. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only checker) and `/cairn maintain` (session-end routine). Use when starting, standardizing, or maintaining a project's documentation.
+description: Scaffold the short onboarding documents any project needs - code or not. Interviews for project name, one-line intent, project type (code/novel/content-site/business/research), greenfield vs brownfield, and tracked vs local mode, then renders root CLAUDE.md (imports README and ARCHITECTURE), README.md, ARCHITECTURE.md, CONTRIBUTING.md, CHANGELOG.md, decisions/ (append-only ADRs), docs/ templates (recipe, feature, design), and a local, untracked CLAUDE.local.md; code projects also get a CLAUDE.md folder page in each working folder, fed by docstrings. No-clobber, so it is safe to run on a partly-documented project. Day-2 subcommands - `/cairn audit` (zero-dep, report-only checker) and `/cairn maintain` (session-end routine). Use when starting, standardizing, or maintaining a project's documentation.
 ---
 
 # `/cairn` - scaffold the onboarding documents
@@ -17,6 +17,7 @@ the user, then calls a zero-dependency renderer.
 Runs in the target project's Claude Code session; cwd is the project. This
 skill's own directory holds the renderer, the auditor, and templates:
   {skill-dir}/render.py
+  {skill-dir}/pages.py               (folder pages for code; render.py runs it)
   {skill-dir}/audit.py               (zero-dep spine checker, report-only)
   {skill-dir}/templates/*.template   (plus templates/decisions/)
 
@@ -74,8 +75,11 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
    map; write CONTRIBUTING.md's setup, workflow and house rules; add an ADR
    (copy decisions/ADR-template.md) the next time you make a decision a future
    session would question; keep this machine's paths and tools in
-   CLAUDE.local.md, which is never committed." If render failed, REPORT the
-   stderr and EXIT.
+   CLAUDE.local.md, which is never committed." For code, ADD: "Each working
+   folder now has a CLAUDE.md page: fill its purpose and the lines outside
+   the cairn:files block; after docstring changes, run
+   `python {skill-dir}/pages.py` to refresh the block." If render failed,
+   REPORT the stderr and EXIT.
 </instructions>
 
 <audit-subcommand>

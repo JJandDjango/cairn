@@ -284,6 +284,15 @@ def test_cli_output_and_exit_codes(tmp_path, capsys):  # 24
     assert _cli(tmp_path, answers) == 1
 
 
+# ---------------------------------------------- the handoff rule (Pass 2, 20)
+
+@pytest.mark.parametrize("ptype", ALL_TYPES)
+def test_contributing_states_handoff_rule(tmp_path, ptype):  # Pass 2, 20
+    contrib = " ".join(_read(_render(tmp_path, project_type=ptype), "CONTRIBUTING.md").split())
+    assert ("A handoff in the middle of a piece of work stays in that work's "
+            "own folder, never in a top-level file.") in contrib
+
+
 # ------------------------------------------------------ graphify removed (25)
 
 def test_no_graphify_traces():  # 25

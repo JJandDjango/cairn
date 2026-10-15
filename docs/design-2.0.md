@@ -46,7 +46,11 @@ A session starts on about 5 KB (about 1,300 tokens).
 
 **Which folders get a page:** every folder a session might work in; not
 git-ignored folders, test fixture folders (the parent's page covers them
-in one line), or vendored or generated code.
+in one line), or vendored or generated code. *Ruled 2026-10-14:* a
+virtualenv (a folder holding `pyvenv.cfg`) counts as vendored, and the
+root `decisions/` folder gets none, since `ARCHITECTURE.md` names it;
+`docs/` gets a page. Every file in a paged folder gets a line, dotfiles
+included.
 
 **No `STATE.md`.** A status command prints last done (git log, merged
 PRs), next (issues, or a project's own source) and what waits on the

@@ -7,6 +7,8 @@ Read this before working or committing.
 
 ## Workflow
 <!-- How a change moves: branch, review, merge, release. -->
+A handoff in the middle of a piece of work stays in that work's own folder,
+never in a top-level file.
 
 ## House rules
 <!-- One line each; link the ADR when a rule has one. -->
