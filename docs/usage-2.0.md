@@ -58,7 +58,7 @@ A session reads in this order, stopping when it knows enough:
 Each fact lives in one place. `ARCHITECTURE.md` lists where each kind
 lives, so a reader looks it up instead of guessing.
 
-## Folder pages 🔴 (13, 14, 17)
+## Folder pages 🟢 (13, 14, 17)
 
 *Code projects.* Every folder a session might work in gets a `CLAUDE.md`:
 its purpose, one line per file and subfolder, local rules, and links to

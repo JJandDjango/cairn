@@ -8,6 +8,7 @@
 flowchart TD
     U[/cairn skill - SKILL.md/] --> R[render.py - zero-dep core]
     R --> T[templates/ - the 2.0 spine]
+    R --> P[pages.py - folder pages, code only]
     U --> A[audit.py - day-2 spine checker]
 ```
 <!-- The ONE diagram, at container zoom. -->
@@ -18,6 +19,7 @@ flowchart TD
 | Component | Responsibility (one line) | Status | Deep doc |
 |---|---|---|---|
 | `render.py` | Substitute the 2.0 spine templates into a project (no-clobber, date-stamped, tracked mode). The whole core engine. | stable | `docs/usage-2.0.md` |
+| `pages.py` | Write a `CLAUDE.md` folder page in each working folder of a code project and refresh its docstring block; render runs it, and it runs alone. | new | `docs/usage-2.0.md` |
 | `audit.py` | Deterministic spine checker - the DOCS-SYSTEM checklist, executable (report-only, git-optional). Still checks the 1.x strata until Pass 5. | stable | `docs/audit.md` |
 | `templates/` | The 2.0 spine templates, plus the 1.x strata kept only as the audit test fixture until Pass 6, with `{{ var }}` slots. | stable | `docs/usage-2.0.md` |
 | `SKILL.md` (`/cairn`) | The Claude Code interview, plus dispatch of the day-2 (audit / maintain) subcommands. | stable | no doc yet |
