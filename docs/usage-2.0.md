@@ -26,7 +26,7 @@ Run `/cairn` in the project folder and answer five questions:
 | Intent | One sentence: why the project exists |
 | Project type | `code` gets the software module; other types get the spine only, for now |
 | Adoption | `greenfield` (new project) or `brownfield` (existing project; inferred lines are tagged for you to confirm) |
-| Mode | `tracked` (files are committed) or `local` (nothing tracked is ever written; ships in Pass 4) |
+| Mode | `tracked` (files are committed) or `local` (nothing tracked is ever written) |
 
 Cairn never overwrites a file. Run it on a half-documented project and it
 fills only the gaps, then lists what it skipped.
@@ -101,15 +101,20 @@ or `[x]`. Issues are never used while the setting is on; if the file is
 missing or every step is done, Next says so. The setting writes no file,
 so it works in local mode. Cairn never looks for a plan on its own.
 
-## Local mode 🔴 (18-21)
+## Local mode 🟢 (18-21)
 
 For a repo whose files you may not change. Folder pages become
 `CLAUDE.local.md`; the top pages live in `.docs-local/`, imported by a
-root `CLAUDE.local.md`. Cairn writes `.docs-local/.gitignore` (`*`) and
-adds `CLAUDE.local.md` to `.git/info/exclude` once, so `git status`
-stays clean. Reruns refresh generated lines and keep the ones you typed.
+root `CLAUDE.local.md`, which also holds this machine's note. Cairn writes
+`.docs-local/.gitignore` (`*`, only when missing) and adds `CLAUDE.local.md`
+to git's exclude file once (found through git, so worktrees work), so
+`git status` stays clean. The root `.gitignore` is never touched, and a
+tracked `CLAUDE.md` in any folder is left alone. Outside git, Cairn writes
+the files, skips the exclude file and says so. Reruns refresh generated
+lines and keep the ones you typed. If a root `CLAUDE.local.md` already
+exists, Cairn keeps it and prints the two import lines to add.
 
-**Caution:** `git clean -x` deletes all of it.
+**Caution:** `git clean -x` deletes all of it. Every local run prints this.
 
 ## Checks: `/cairn audit` 🔴 (22-27)
 

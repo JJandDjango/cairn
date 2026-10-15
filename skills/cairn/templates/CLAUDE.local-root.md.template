@@ -1,0 +1,9 @@
+@.docs-local/README.md
+@.docs-local/ARCHITECTURE.md
+
+Read deeper only as the task needs, following ARCHITECTURE's link for the folder in hand.
+
+# This machine
+
+<!-- Untracked: this machine's paths and tools only. Claude Code loads it at
+     launch. Never commit it. -->

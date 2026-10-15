@@ -33,6 +33,13 @@ Outputs (into the target dir; none overwritten if already present):
   docs/recipe-template.md - docs/feature-template.md - docs/design-template.md
   .gitignore  (tracked mode: + CLAUDE.local.md, once)
 
+Local mode writes nothing tracked. The same set (without the root CLAUDE.md)
+goes under .docs-local/, with a .gitignore of `*`; one root CLAUDE.local.md
+imports its README and ARCHITECTURE and holds this machine's note. Folder
+pages are CLAUDE.local.md. CLAUDE.local.md is added once to the git exclude
+file (skipped outside git, with one line saying so). The root .gitignore is
+never touched.
+
 Build status: audit and maintain still check the 1.x six-strata spine until
 the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
 </context>
@@ -52,9 +59,9 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
    - Q1 header "Project name": "Name for this project?" options: "Use cwd directory name" / "Use git remote name" (offer only if a remote exists) / Other.
    - Q2 header "Project type": "What kind of project is this? (code gets the diagram and status-command row)" options: "code" / "novel" / "content-site" / "business" / "research".
    - Q3 header "Adoption": "Greenfield or brownfield?" options: "greenfield - author the intent now" / "brownfield - infer and mark (inferred)".
-   - Q4 header "Mode": "Commit the documents, or keep them local?" options: "tracked - files are committed (Recommended)" / "local - nothing tracked is ever written (not built yet)".
+   - Q4 header "Mode": "Commit the documents, or keep them local?" options: "tracked - files are committed (Recommended)" / "local - nothing tracked is ever written".
 
-4. CONFIRM local mode is unavailable. If Q4 == "local", TELL the user local mode is not built yet in this release and ASK (AskUserQuestion) whether to continue in tracked mode or stop. On stop, EXIT.
+4. EXPLAIN local mode. If Q4 == "local", TELL the user, in two lines: the documents go under .docs-local/ and a root CLAUDE.local.md, all hidden from git, and `git clean -x` deletes all of it. No further question; go on.
 
 5. PARSE answers into a JSON dict with keys project_name, intent, project_type, adoption, mode:
    - project_name: for "Use cwd directory name" run `(Get-Location).Path | Split-Path -Leaf` (PowerShell); for "Use git remote name" run `git remote get-url origin` and take the last path segment minus `.git`; for Other use the text verbatim. Validate: non-empty, no `/` or `\`.
@@ -69,8 +76,9 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
    where {skill-dir} is this skill's base directory and {json} is the answer dict
    as a single-quoted shell argument (escape inner double quotes as the shell
    needs). The renderer substitutes {{ var }} placeholders, stamps the date, skips
-   any file that already exists, and (tracked mode) adds CLAUDE.local.md to
-   .gitignore once. Exit 0 on success; non-zero with a stderr message on failure.
+   any file that already exists, and adds CLAUDE.local.md once to .gitignore
+   (tracked mode) or to the git exclude file (local mode). Exit 0 on success;
+   non-zero with a stderr message on failure.
 
 7. REPORT the renderer's stdout (the created / skipped lines) plus next steps:
    "Fill in README.md for a user; fill ARCHITECTURE.md's invariants and folder
@@ -80,8 +88,12 @@ the 2.0 build reworks them; on a fresh 2.0 project audit reports no spine.
    CLAUDE.local.md, which is never committed." For code, ADD: "Each working
    folder now has a CLAUDE.md page: fill its purpose and the lines outside
    the cairn:files block; after docstring changes, run
-   `python {skill-dir}/pages.py` to refresh the block." If render failed,
-   REPORT the stderr and EXIT.
+   `python {skill-dir}/pages.py` to refresh the block." In local mode the
+   docs are under .docs-local/, the folder pages are CLAUDE.local.md (refresh
+   with `python {skill-dir}/pages.py --page CLAUDE.local.md`), and the
+   renderer's `git clean -x` caution line is repeated to the user. If a root
+   CLAUDE.local.md already existed, the renderer lists the two import lines
+   to add; relay them. If render failed, REPORT the stderr and EXIT.
 </instructions>
 
 <audit-subcommand>
@@ -158,7 +170,7 @@ session actually changed; every write lands uncommitted for the user's review.
 - [ ] Target directory confirmed (cwd, or git root if the user chose it); no git requirement enforced.
 - [ ] One-line intent collected (authored, or inferred-and-confirmed for brownfield).
 - [ ] Answers captured - project_name, project_type, adoption, mode - from the interview or supplied by the invocation.
-- [ ] Local mode, if chosen, was confirmed unavailable and the user chose tracked or stop.
+- [ ] Local mode, if chosen, was explained (where the files go, the `git clean -x` caution) and the caution line relayed.
 - [ ] Answers parsed to valid JSON; render.py invoked; exit 0.
 - [ ] Spine files present at target (or reported skipped where pre-existing); nothing overwritten.
 - [ ] Outcome + next steps reported to the user.
