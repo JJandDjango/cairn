@@ -11,7 +11,7 @@ permissions:
 
 env:
   # The one place to pin the cairn version: a branch or a tag.
-  CAIRN_REF: main
+  CAIRN_REF: v2.0.0
 
 jobs:
   audit:

@@ -1,62 +1,42 @@
 # Contributing to Cairn
 
-Thanks for wanting to add a stone to the cairn. This project is small,
-solo-maintained, and documented with its own system — so contributing has a
-little structure, and this page is all of it.
+Read this before working or committing.
 
-## The one rule: `main` is protected — contribute by fork + PR
+## Set up and test
+Python 3.12, standard library only. Install pytest, then run
+`python -m pytest`; green before you push. Check the docs with
+`python skills/cairn/audit.py --cwd .`; it must exit 0. For a `SKILL.md`
+change, run `/cairn` in a scratch directory and confirm what it writes.
+To turn on the PromptLang test, `pip install git+https://github.com/JJandDjango/foundations`.
 
-`main` carries a ruleset ([`scripts/ruleset-protect-main.json`](scripts/ruleset-protect-main.json))
-that blocks force-pushes, blocks deletion, and **requires a pull request for every
-change** — including from the maintainer. Only the maintainer has write access to
-this repo; nobody pushes to `main` directly. That isn't a snub — it's the same
-*"never touch main directly"* discipline Cairn preaches, enforced on Cairn itself.
+## Workflow
+`main` is protected by a [ruleset](scripts/ruleset-protect-main.json): no
+force-push, no deletion, and every change by pull request, the
+maintainer's included. So: fork, branch, make the change, push to your
+fork, open a PR against `main` saying what changed and why. For anything
+non-trivial, open an issue first. Review takes a few days, and CI must be
+green. A handoff in the middle of a piece of work stays in that work's own
+folder, never in a top-level file.
 
-So the flow for any outside change is **fork → branch → PR**:
-
-1. **Fork** the repo and clone your fork.
-2. **Branch:** `git checkout -b fix-short-description`
-3. Make the change.
-4. **Run the suite:** `python -m pytest` (the engine is stdlib-only; the tests
-   need `pytest`). Green before you push.
-5. Keep the docs spine honest — see below.
-6. **Push to your fork and open a PR against `main`.** Say *what* changed and *why*.
-
-For anything non-trivial, **open an issue first** so we can agree on the shape
-before you build — it saves you a wasted PR. Typos and small fixes: just send the PR.
-
-## Keep the spine honest (Cairn dogfoods its own system)
-
-Cairn is documented *with Cairn*. A change isn't done until the right stratum is
-updated — reviewers check this against [`DOCS-SYSTEM.md`](DOCS-SYSTEM.md):
-
-| You… | Update |
-|---|---|
-| add / remove / rewire a piece | that Component's row in [`MAP.md`](MAP.md) (hand-authored) |
-| make a decision a future maintainer would question | a new ADR — copy [`decisions/ADR-template.md`](decisions/ADR-template.md) to `NNNN-title.md`. **Never edit an existing ADR; supersede it.** |
-| work a piece in depth | author / refresh its `docs/<piece>.md` page |
-
-Leave **`STATE.md`** alone — it's the maintainer's disposable session handoff,
-regenerated at session end, not a contribution surface. Hold the size budgets and
-keep the single diagram in `MAP.md` at container zoom.
-
-## Testing your change
-
-- **Engine (`render.py`)** — `python -m pytest`, plus the standalone `render.py`
-  command in [`USAGE.md`](USAGE.md) exercises a real render end to end.
-- **Skill / interview (`SKILL.md`)** — run `/cairn` in a scratch directory and
-  confirm the spine it writes.
-
-## Commits & license
-
-- Focused commits, imperative subject line.
-- If you author with an AI coding agent, follow the footer convention in
-  [`decisions/0005`](decisions/0005-record-commit-footer-errata.md) — copy the
-  session URL from the live session, never from memory.
-- By contributing, you agree your work is licensed under the **MIT License**
-  ([`LICENSE`](LICENSE)) — inbound = outbound.
-
-## What to expect
-
-Solo-maintained, so review may take a few days. External PRs are read before
-merge; once CI is wired up, it must be green.
+## House rules
+- **Zero-dependency core.** Engine scripts import only the standard library.
+- **No-clobber.** Render fills gaps; it never overwrites authored text.
+- **ADRs are append-only.** Copy [the template](decisions/ADR-template.md)
+  to `NNNN-title.md`; supersede, never edit
+  ([0001](decisions/0001-record-architecture-decisions.md)).
+- **The doc touch is part of done.** A piece added, removed or rewired
+  updates its row in `ARCHITECTURE.md`; a decision a future maintainer
+  would question gets an ADR.
+- **Automate detection, not authorship.** Machines flag; people write
+  ([0006](decisions/0006-automate-detection-not-authorship.md)).
+- **PromptLang governs `SKILL.md`.** It validates under
+  `prompt-lang.config.yaml`; placeholders stay brace-form
+  ([0007](decisions/0007-adopt-promptlang-for-the-skill-prompt.md)).
+- **One version source.** `.claude-plugin/plugin.json`; `pyproject.toml`
+  is pytest config only.
+- **LF line endings**, pinned by `.gitattributes`.
+- **Commit footers** carry the real session URL, copied from the live
+  session, never fabricated
+  ([0005](decisions/0005-record-commit-footer-errata.md)).
+- **License.** By contributing you license your work under the MIT
+  [License](LICENSE); inbound equals outbound.

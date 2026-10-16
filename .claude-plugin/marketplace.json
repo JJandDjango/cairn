@@ -7,7 +7,7 @@
     {
       "name": "cairn",
       "source": "./",
-      "description": "A durable, pace-layered documentation spine for any project — code or not."
+      "description": "The short onboarding documents every new collaborator needs, for any project, with checks that keep them small, current and linked."
     }
   ]
 }

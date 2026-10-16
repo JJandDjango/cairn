@@ -22,3 +22,7 @@ validation:
 file_rules:
   - pattern: "**/skills/*/SKILL.md"
     required_tags: [purpose, instructions]
+  # Folder pages (CLAUDE.md under skills/) are reference text, not prompts.
+  - pattern: "**/skills/**/CLAUDE.md"
+    skip_frontmatter: true
+    skip_required_tags: true

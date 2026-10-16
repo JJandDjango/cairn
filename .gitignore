@@ -13,3 +13,6 @@ Thumbs.db
 # Local scratch
 scratch/
 *.local
+
+# this machine's untracked note (added by cairn)
+CLAUDE.local.md

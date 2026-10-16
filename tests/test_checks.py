@@ -531,7 +531,7 @@ def test_tracked_render_writes_audit_workflow_no_clobber(tmp_path, capsys, ptype
     assert "audit.py --cwd ." in text
     assert "{{" not in text
     assert "https://github.com/JJandDjango/cairn" in text
-    assert text.count("CAIRN_REF: main") == 1
+    assert text.count("CAIRN_REF: v2.0.0") == 1
 
     _write(root, WORKFLOW, "mine\n")
     capsys.readouterr()
