@@ -3,8 +3,9 @@
 Focus: the 2.0 file set for every project type, each template's required
 sections, the budgets and link rules a fresh render must already meet,
 no-clobber, the interview answers (mode, the removed backend key), and the
-absence of any graphify trace. The test numbers in comments are the Pass 1
-test list approved 2026-10-14.
+absence of any graphify trace, and the retired 1.x files and templates. The
+test numbers in comments are the Pass 1 test list approved 2026-10-14; "Pass 6,
+14" is the retirement test of the list approved 2026-10-15.
 """
 import json
 import re
@@ -311,3 +312,23 @@ def test_no_graphify_traces():  # 25
     scanned.append(REPO_ROOT / "pyproject.toml")
     for path in scanned:
         assert "graphify" not in path.read_text(encoding="utf-8").lower(), path
+
+
+# ------------------------------------------------ 1.x retired (Pass 6, 14)
+
+@pytest.mark.parametrize("mode", ["tracked", "local"])
+@pytest.mark.parametrize("ptype", ALL_TYPES)
+def test_fresh_render_writes_no_1x_file(tmp_path, ptype, mode):  # Pass 6, 14
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    assert _cli(tmp_path, _answers(project_type=ptype, mode=mode)) == 0
+    written = {Path(rel).name for rel in _files(tmp_path)}
+    assert written
+    assert not written & STRATA_1X
+
+
+def test_the_five_1x_templates_are_gone():  # Pass 6, 14
+    for name in sorted(STRATA_1X):
+        assert not (TEMPLATES / f"{name}.template").exists(), name
+    left = [p.name for p in TEMPLATES.rglob("*")
+            if p.is_file() and p.name.removesuffix(".template") in STRATA_1X]
+    assert left == []

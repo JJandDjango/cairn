@@ -142,8 +142,23 @@ Your agent runs the audit, refreshes generated lines, and touches the
 pages for what the session changed. Every edit stays uncommitted for your
 review. There is no state file to regenerate.
 
-## Moving from 1.x 🔴 (29, 30)
+## Moving from 1.x 🟢 (29, 30)
 
 On finding `THEORY.md`, `MAP.md`, `STATE.md`, `CONVENTIONS.md` or
-`DOCS-SYSTEM.md`, `/cairn` maps each to its 2.0 home with no text you
-wrote lost. The exact behavior is decided in Pass 6.
+`DOCS-SYSTEM.md`, `/cairn migrate` maps each to its 2.0 home with no text
+you wrote lost. It is report-first: a dry run prints one line per file
+(source, destination, action) and writes nothing. Run it again with
+`--apply` and the script does only the mechanical moves:
+
+- `MAP.md` becomes `ARCHITECTURE.md` (or joins it, if one exists).
+- `THEORY.md` joins `ARCHITECTURE.md`; `CONVENTIONS.md` and
+  `DOCS-SYSTEM.md` join `CONTRIBUTING.md`. Each lands under a
+  `## From <FILE>.md` heading, text verbatim, after any text already there.
+- A source is deleted only once its text is found in the destination.
+- `STATE.md` is left alone. Your agent routes its parts, then removes it.
+- A page over its size budget is reported and left as written; your agent
+  trims it. `decisions/` and `docs/` are never touched.
+
+The 1.x checks and templates are gone. Auditing a 1.x spine exits 2 with a
+pointer to `/cairn migrate`; leftover 1.x files beside a 2.0 spine give one
+INFO note. Nothing is committed.
