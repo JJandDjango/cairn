@@ -14,7 +14,8 @@ To turn on the PromptLang test, `pip install git+https://github.com/JJandDjango/
 force-push, no deletion, and every change by pull request, the
 maintainer's included. So: fork, branch, make the change, push to your
 fork, open a PR against `main` saying what changed and why. For anything
-non-trivial, open an issue first. Review takes a few days, and CI must be
+non-trivial, open an issue first; for a typo or small fix, just send the
+PR. Review takes a few days, and CI must be
 green. A handoff in the middle of a piece of work stays in that work's own
 folder, never in a top-level file.
 

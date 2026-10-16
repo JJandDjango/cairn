@@ -26,6 +26,9 @@ def _read(rel):
 
 
 def test_repo_audits_clean():  # 1
+    # The folder checks run only for a code project; a clean audit means
+    # nothing if they were skipped.
+    assert audit.is_code_project(ROOT)
     findings = audit.run_checks(ROOT, audit.spine_mode(ROOT))
     bad = [(f.code, f.path) for f in findings if f.severity in ("ERROR", "WARN")]
     assert bad == []
@@ -77,5 +80,6 @@ def test_audit_workflow_template_pins_v2_0_0_once():  # 8
 
 
 def test_ci_runs_the_audit_on_the_repo_root():  # 9
-    text = _read(".github/workflows/ci.yml")
-    assert re.search(r"audit\.py\s+--cwd\s+\.", text)
+    live = [ln for ln in _read(".github/workflows/ci.yml").splitlines()
+            if not ln.lstrip().startswith("#")]
+    assert any(re.search(r"audit\.py\s+--cwd\s+\.", ln) for ln in live)

@@ -1,47 +1,58 @@
-# Audit - the executable checklist
+# Audit: what `/cairn audit` checks
 
-> **docs/ stratum** - *how does this piece work?* This page covers `audit.py`,
-> the zero-dependency spine checker behind `/cairn audit` and the detection
-> half of `/cairn maintain` ([[0006-automate-detection-not-authorship]]).
+`audit.py` is the zero-dependency checker behind `/cairn audit` and the
+detection half of `/cairn maintain`
+([0006](../decisions/0006-automate-detection-not-authorship.md)). It
+reports; it never writes.
 
-<!-- covers: skills/cairn/audit.py -->
+## Run it
 
-## What it is
-A deterministic, REPORT-ONLY checker that makes the `DOCS-SYSTEM.md` audit
-checklist executable. Core tier: stdlib only, works
-on non-code spines and without git (history checks degrade to mtimes or skip).
-
-Run it via `/cairn audit`, or standalone:
+Run `/cairn audit`, or
 `python skills/cairn/audit.py [--cwd DIR] [--format text|json]`.
-Exit codes: **0** clean (INFO allowed) - **1** any WARN/ERROR - **2** no spine.
+
+| Exit | Meaning |
+|---|---|
+| 0 | Clean. INFO findings are allowed. |
+| 1 | At least one ERROR or WARN finding. |
+| 2 | No 2.0 spine, or bad usage. A folder holding only 1.x files gets a one-line pointer to `/cairn migrate`. |
+
+The spine is `ARCHITECTURE.md` in `.docs-local/` (local mode, which wins
+when both exist) or at the root (tracked mode). Local mode reads the top
+pages in `.docs-local/` and folder pages named `CLAUDE.local.md`; tracked
+mode reads the root files and folder pages named `CLAUDE.md`. Git is
+optional: it only lists files for the folder checks, so a novel in a bare
+folder audits as cleanly as a code repo.
 
 ## The checks
 
 | Code | Fires when | Severity |
 |---|---|---|
-| `SPINE-MISSING` | a stratum file/dir is absent | ERROR |
-| `MAP-DOC-MISSING` | a MAP Deep-doc cell is neither "no doc yet" nor an existing file | ERROR |
-| `DOCS-ORPHAN` | a docs/ page no MAP row references | INFO |
-| `DIAGRAM-COUNT` / `DIAGRAM-PLACE` | >1 mermaid diagram, or one outside MAP.md (zero -> INFO) | WARN |
-| `BUDGET-*` | a stratum exceeds its budget; a page ~= 80 raw lines (ADR = 1/2) | WARN |
-| `STATE-STALE` | STATE's `_Generated_` stamp predates newer spine activity, or is missing | WARN |
-| `ADR-EDITED` | git only: an ADR modified after creation (a digit-bearing "superseded by" stamp -> INFO, the one sanctioned edit) | WARN |
-| `ADR-DUP` / `ADR-SUPERSEDE` | duplicate ADR numbers / "superseded by NNNN" pointing nowhere | ERROR |
-| `INFERRED-TAG` | THEORY.md intent or CONVENTIONS.md entries still carry `(inferred)` outside HTML comments | WARN |
-| `CONV-LINK` / `CONV-SUPERSEDED` | a CONVENTIONS.md entry cites an ADR that does not exist / one that is superseded | ERROR / WARN |
-| `DOCS-STALE` | a page is older than a file its covers marker names (no marker -> one aggregate INFO) | WARN |
+| `SIZE-BUDGET` | A file is over budget (1 KB = 1024 bytes): `README.md` 2 KB, `ARCHITECTURE.md` 3 KB, `CONTRIBUTING.md` 3 KB, a folder page 2 KB. The tracked root `CLAUDE.md` may hold 10 lines. | ERROR |
+| `AT-IMPORT` | An import-shaped `@` (one that starts a word) sits outside code in `README.md`, `ARCHITECTURE.md` or a folder page. The finding names the line. | ERROR |
+| `LINK-BROKEN` | A relative link in a top page or folder page points at a file or folder that does not exist. Anchors are stripped; external, `mailto`, `#`-only and in-code links are skipped. | ERROR |
+| `GEN-STALE` | A folder page's generated block differs from what `pages.py` would write now. | ERROR |
+| `GEN-STALE` | A folder page has no block markers, so its lines cannot be verified. | INFO |
+| `COVER-PAGE` | A working folder has no page. | ERROR |
+| `COVER-FILE` | A file in a paged folder has no line in its page. | ERROR |
+| `LEGACY-1X` | 1.x files (`THEORY.md`, `MAP.md`, `STATE.md`, `CONVENTIONS.md`, `DOCS-SYSTEM.md`) still sit beside the 2.0 spine. The message names `/cairn migrate`; no 1.x check runs. | INFO |
 
-`CONVENTIONS.md` is opt-in (pre-1.2 spines never scaffolded it): absent means no
-findings; present means budget, links, and tags are enforced. HTML comments are
-invisible to its checks, so guidance text and commented-out entries never flag.
+## Folder checks
 
-## The covers marker
-A docs page may declare what it explains, so staleness is checkable:
-`<!-- covers: skills/cairn/render.py, skills/cairn/templates/ -->` -
-comma-separated files, directories, or globs, relative to the project root.
-Derived churn (`__pycache__`, `.git`, `node_modules`, `.pytest_cache`, `.pyc`) never counts as
-activity. Last-touch dates come from git when available, else mtimes.
+`GEN-STALE`, `COVER-PAGE` and `COVER-FILE` run for a code project. The
+audit knows it is one from the `/cairn status` row in `ARCHITECTURE.md`,
+which `render.py` writes for code only, so a code project whose pages
+were never made or were deleted still gets `COVER-PAGE`. When the row is
+absent, the folder checks run only if at least one folder page exists. A
+novel or a business plan has no folder checks.
+
+## Retired in 2.0
+
+The 1.x checks are gone: `SPINE-MISSING`, the strata budgets (`BUDGET-*`),
+`STATE-STALE`, `DOCS-STALE` and its covers marker, `MAP-DOC-MISSING`,
+`DOCS-ORPHAN`, the diagram checks, `ADR-*`, `INFERRED-TAG` and `CONV-*`.
+`/cairn migrate` moves a 1.x spine to the 2.0 pages.
 
 ## The one invariant
-Audit detects; it never authors. Fix-ups stay with the human - or with
-`/cairn maintain`, whose agent-made touches land uncommitted for review.
+
+Audit detects; it never authors. Fix-ups stay with the human, or with
+`/cairn maintain`, whose touches land uncommitted for review.
