@@ -25,6 +25,23 @@ Run `/cairn` in the project folder and answer five questions:
 Cairn never overwrites a file. Run it on a half-documented project and it
 fills only the gaps, then lists what it skipped.
 
+**Without Claude Code.** The renderer is plain Python. Give the five
+answers as one JSON object:
+
+```bash
+python skills/cairn/render.py --cwd ./my-project --answers '{
+  "project_name": "my-novel",
+  "intent": "A historical novel on a hard deadline.",
+  "project_type": "novel",
+  "adoption": "greenfield",
+  "mode": "tracked"
+}'
+```
+
+`--cwd` is where files are written (default: the current directory). The
+keys are the five in the table above, and each value is one of its
+choices. For `code`, the renderer writes the folder pages too.
+
 ## What you get
 
 ```
@@ -156,3 +173,15 @@ you wrote lost. It is report-first: a dry run prints one line per file
 The 1.x checks and templates are gone. Auditing a 1.x spine exits 2 with a
 pointer to `/cairn migrate`; leftover 1.x files beside a 2.0 spine give one
 INFO note. Nothing is committed.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| Cairn did not overwrite my file | No-clobber, by design. Delete the file and rerun, or edit it in place. |
+| `/cairn` is not listed | Reload the Claude Code session after installing the skill. |
+| Wrong project type | The output is plain markdown. Edit it, or delete the files and rerun. |
+| `--answers is not valid JSON` | Pass the JSON as one quoted shell argument, with the five keys from [Set up a project](#set-up-a-project). |
+| `/cairn audit` exits 1 | Each finding names its code and file; see [the audit page](audit.md). Fix the page, or run `/cairn maintain`. |
+| `/cairn audit` exits 2 | No 2.0 spine here. On a 1.x spine run `/cairn migrate`; with no spine, run `/cairn`. |
+| `/cairn status` shows no PRs or issues | `gh` is missing or not signed in; the line says which. Commits still print. |
