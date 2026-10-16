@@ -35,3 +35,7 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -v --tb=short
+
+      # Cairn dogfoods its own 2.0 spine: the repo must audit clean.
+      - name: Audit the docs spine
+        run: python skills/cairn/audit.py --cwd .

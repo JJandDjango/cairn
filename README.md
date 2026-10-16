@@ -1,103 +1,49 @@
 # Cairn
 
-**A durable documentation spine for any project — code or not.**
+**The short documents every new collaborator needs, and a check that they stay true.**
 
-A cairn is a stack of stones that marks a trail: built up over time, each stone
-added but never moved, so the next traveler finds the way. Your project's docs,
-exactly — **append-only, pace-layered, for wayfinding.**
+A cairn is a stack of stones that marks a trail. Cairn writes a few short
+onboarding pages for your project and checks that they stay small, current
+and linked. A session, human or agent, starts on about 5 KB and reads
+deeper only as the task needs.
 
-Cairn scaffolds a **pace-layered** documentation spine: six files, each changing
-at its own rate under a fixed contract, so fast edits never tear slow truth.
-
-> **Want to use it? → [USAGE.md](USAGE.md)** — the explicit step-by-step guide:
-> invoke → interview (answer-by-answer) → outputs → day-2 workflow → worked example.
-
-## The six strata
-
-| Stratum | Question it answers | Budget | Update trigger | Mode |
-|---|---|---|---|---|
-| `THEORY.md` | Why exist? What must stay true? | ≤1 page | purpose / invariants change | hand-edited, rare |
-| `MAP.md` | What are the pieces & how connected? | ≤2 pages | piece add / remove / rewire | hand-edited (or graphify-derived) |
-| `decisions/` | Why done this way? | ≤½ page each | a new significant decision | append-only, never edited |
-| `docs/` | How does each piece work? | mirrors structure | internals change | authored on touch (or generated) |
-| `STATE.md` | What's in flight now? | ≤1 page | every session end | regenerated, disposable |
-| `CONVENTIONS.md` | How do we do things here? | ≤1 page | a rule is adopted / revised / retired | hand-edited (entries link ADRs) |
-
-Read `THEORY.md → MAP.md → STATE.md` (~2–3k tokens) and you know *what, how, and
-where*. Descend into `decisions/` and `docs/` only on demand.
-
-Works on **any** project — a codebase, a novel, a content site, a business, a
-research program. "Component" simply becomes chapter / section / workstream / claim.
-The pace-layered **spine** is what generalizes; the optional graphify backend (a
-derived MAP) is code-only.
+You get a root `CLAUDE.md`, `README.md`, `ARCHITECTURE.md`,
+`CONTRIBUTING.md` and `CHANGELOG.md`, plus a page in each working folder of
+a code project. It works on a codebase or a novel alike, and never
+overwrites a file you wrote.
 
 ## Install
 
-### As a Claude Code skill (simplest)
-Copy the skill into your Claude Code skills directory, then run `/cairn`:
+Copy the skill into your Claude Code skills folder:
 
 ```bash
-cp -r skills/cairn ~/.claude/skills/cairn            # macOS / Linux
+cp -r skills/cairn ~/.claude/skills/cairn
 ```
+
 ```powershell
-Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn   # Windows
+Copy-Item -Recurse skills\cairn $HOME\.claude\skills\cairn
 ```
 
-### As a Claude Code plugin
-Once the repo is public, add it as a marketplace and install:
+Python's standard library is the only dependency.
+
+## Use
+
+Run `/cairn` in your project and answer five questions: name, intent,
+project type, new or existing project, tracked or local files. Then:
 
 ```
-/plugin marketplace add JJandDjango/cairn
-/plugin install cairn
+/cairn status    last done, next, and what waits on you
+/cairn audit     check budgets, links and freshness
+/cairn maintain  session-end refresh of generated lines and pages
+/cairn migrate   move a 1.x project to these pages
 ```
 
-### Standalone (no Claude Code)
-The engine is zero-dependency Python (stdlib only). Assemble the answers as JSON
-and run the renderer directly:
+The full guide is [docs/usage.md](docs/usage.md).
 
-```bash
-python skills/cairn/render.py --cwd ./my-project --answers '{
-  "project_name": "my-novel",
-  "intent": "A historical novel on a hard deadline.",
-  "project_type": "novel",
-  "backend": "none",
-  "adoption": "greenfield"
-}'
-```
+## Help and contributing
 
-## How it works
-
-`/cairn` interviews you — name, one-line intent, project type, greenfield vs
-brownfield, and (for code) whether to wire an optional graphify backend —
-then renders the strata into your project. It **never overwrites** an existing
-file: run it on a half-documented project and it fills only the gaps.
-
-- **Greenfield** authors `THEORY.md` now.
-- **Brownfield** marks inferred intent `(inferred — confirm)` for the owner to correct.
-- **Non-code** projects drop the diagram mandate and rename the component unit.
-- **The `graphify` backend** (code only) adds an optional structured-MAP stub and
-  `graphify-out/` + `/manifest.json` to `.gitignore`; `/cairn derive`/`reconcile`/`view`
-  build and reconcile a structured MAP from the code graph.
-- **Day 2:** `/cairn audit` makes the checklist executable (report-only, zero-dep);
-  `/cairn maintain` has your agent do the session-end touches — detection is
-  automated, authorship stays human-reviewed.
-
-## Principle
-
-Pace layering (Stewart Brand's shearing layers): stratify documentation by rate
-of change. Every stratum answers exactly one question, carries a size budget, has
-an explicit update trigger, and a maintenance mode (hand-edited, append-only, or
-regenerated). That fixed contract is what makes the system formulaic across
-projects of any kind.
-
-## Layout
-
-```
-skills/cairn/
-├─ SKILL.md            # the /cairn interview
-├─ render.py           # zero-dependency renderer (also runnable standalone)
-└─ templates/          # the six strata + DOCS-SYSTEM.md + ADR seed & template
-```
+Open an issue for questions or ideas. To change Cairn, read
+[CONTRIBUTING.md](CONTRIBUTING.md); `main` takes pull requests only.
 
 ## License
 

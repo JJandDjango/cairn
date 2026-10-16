@@ -1,22 +1,16 @@
-# Using Cairn 2.0
-
-> Pass 0 of the 2.0 build: written before the code, from
-> [design-2.0.md](design-2.0.md) and [features-2.0.md](features-2.0.md).
-> Each section carries its feature numbers and a status marker: 🟢 shipped,
-> 🟡 partly shipped, 🔴 not built. Until Pass 7, the shipped tool is 1.2;
-> see [USAGE.md](../USAGE.md).
+# Using Cairn
 
 Cairn writes the few short documents a new collaborator reads on day one,
 and checks that they stay short, current and linked. Every session, human
 or agent, starts on about 5 KB and reads deeper only as its task needs.
 
-## Install 🔴
+## Install
 
 As a Claude Code skill: copy `skills/cairn` into `~/.claude/skills/`, then
 run `/cairn` in your project. No dependencies beyond Python's standard
 library.
 
-## Set up a project 🟢 (10, 11, 12)
+## Set up a project
 
 Run `/cairn` in the project folder and answer five questions:
 
@@ -31,7 +25,7 @@ Run `/cairn` in the project folder and answer five questions:
 Cairn never overwrites a file. Run it on a half-documented project and it
 fills only the gaps, then lists what it skipped.
 
-## What you get 🟢 (1-9)
+## What you get
 
 ```
 CLAUDE.md          imports README and ARCHITECTURE; loads at launch
@@ -58,7 +52,7 @@ A session reads in this order, stopping when it knows enough:
 Each fact lives in one place. `ARCHITECTURE.md` lists where each kind
 lives, so a reader looks it up instead of guessing.
 
-## Folder pages 🟢 (13, 14, 17)
+## Folder pages
 
 *Code projects.* Every folder a session might work in gets a `CLAUDE.md`:
 its purpose, one line per file and subfolder, local rules, and links to
@@ -75,7 +69,7 @@ with no setting.
 **Handoffs.** A handoff in the middle of a piece of work stays in that
 work's own folder, never in a top-level file.
 
-## What's in flight: the status command 🟢 (15, 16)
+## What's in flight: the status command
 
 *Code projects.* There is no `STATE.md`. Run `/cairn status` instead;
 `ARCHITECTURE.md` names it. It prints three sections, each `(none)` when
@@ -101,7 +95,7 @@ or `[x]`. Issues are never used while the setting is on; if the file is
 missing or every step is done, Next says so. The setting writes no file,
 so it works in local mode. Cairn never looks for a plan on its own.
 
-## Local mode 🟢 (18-21)
+## Local mode
 
 For a repo whose files you may not change. Folder pages become
 `CLAUDE.local.md`; the top pages live in `.docs-local/`, imported by a
@@ -116,7 +110,7 @@ exists, Cairn keeps it and prints the two import lines to add.
 
 **Caution:** `git clean -x` deletes all of it. Every local run prints this.
 
-## Checks: `/cairn audit` 🟢 (22-27)
+## Checks: `/cairn audit`
 
 Report-only. Exits 1 on any failure, in both modes.
 
@@ -136,13 +130,13 @@ only if a folder page exists. In tracked mode, Cairn writes `.github/workflows/c
 which runs the audit on every PR. It clones the Cairn repo at one pinned
 ref, set once at the top of the file.
 
-## Session end: `/cairn maintain` 🟢 (28)
+## Session end: `/cairn maintain`
 
 Your agent runs the audit, refreshes generated lines, and touches the
 pages for what the session changed. Every edit stays uncommitted for your
 review. There is no state file to regenerate.
 
-## Moving from 1.x 🟢 (29, 30)
+## Moving from 1.x
 
 On finding `THEORY.md`, `MAP.md`, `STATE.md`, `CONVENTIONS.md` or
 `DOCS-SYSTEM.md`, `/cairn migrate` maps each to its 2.0 home with no text
