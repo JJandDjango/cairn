@@ -1,15 +1,17 @@
-"""Tests for the 2.0 checks (features 22-28): audit.py, the CI template, SKILL.md.
+"""Tests for the 2.0 checks (features 22-28) and the 1.x retirement (feature 30).
 
 Focus: detection and exit codes, each finding code in tracked and local mode,
 that a fresh render passes its own audit, that the audit writes nothing, the
-workflow render.py writes, and the maintain and audit sections of SKILL.md.
-The test numbers in comments are the Pass 5 test list approved 2026-10-15;
-16 (plan equals run) is in test_pages.py.
+workflow render.py writes, the SKILL.md sections, and what happens to a 1.x
+spine (exit 2 pointing at /cairn migrate, or one LEGACY-1X INFO beside a 2.0
+spine). The test numbers in comments are the Pass 5 test list approved
+2026-10-15 (16, plan equals run, is in test_pages.py) and the Pass 6 test list
+approved 2026-10-15 (items 15-18; 14 is in test_render.py, 1-13 in
+test_migrate.py).
 """
 import json
 import re
 import subprocess
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -135,25 +137,107 @@ def test_no_spine_exits_2(tmp_path, capsys):  # 3
     assert "ARCHITECTURE.md" in capsys.readouterr().err
 
 
-def test_1x_only_spine_behaves_as_before(tmp_path):  # 3
-    spine_1x.render_1x({"project_name": "demo", "intent": "why", "project_type": "code",
-                        "adoption": "greenfield"}, tmp_path, date.today().isoformat())
+# ------------------------------------------------- 1.x retirement (Pass 6: 15-17)
+
+# Everything the 1.x audit was made of; none of it may remain in audit.py.
+RETIRED = [
+    "check_spine_presence", "check_map_doc_links", "check_docs_orphans", "check_diagrams",
+    "check_budgets", "check_state_freshness", "check_adrs", "check_inferred",
+    "check_conventions", "check_docs_staleness", "run_audit", "LINES_PER_PAGE",
+    "_deep_doc_rows", "_spine_md_files", "_adr_files", "_conventions_doc_refs",
+    "_expand_covers_token",
+]
+CODES_1X = ["SPINE-MISSING", "MAP-DOC-MISSING", "DOCS-ORPHAN", "DIAGRAM-COUNT", "DIAGRAM-PLACE",
+            "BUDGET-THEORY", "BUDGET-MAP", "BUDGET-STATE", "BUDGET-CONVENTIONS", "BUDGET-ADR",
+            "STATE-STALE", "ADR-EDITED", "ADR-DUP", "ADR-SUPERSEDE", "INFERRED-TAG",
+            "CONV-LINK", "CONV-SUPERSEDED", "DOCS-STALE"]
+LEGACY = "LEGACY-1X"
+
+
+def _audit_json(root, capsys):
+    capsys.readouterr()
+    code = audit.main(["--cwd", str(root), "--format", "json"])
+    return code, json.loads(capsys.readouterr().out)
+
+
+def test_1x_checks_are_gone_from_audit():  # 15
+    for name in RETIRED:
+        assert not hasattr(audit, name), name
+
+
+@pytest.mark.parametrize("fmt", ["text", "json"])
+@pytest.mark.parametrize("names", [(n,) for n in spine_1x.NAMES] + [spine_1x.NAMES],
+                         ids=lambda names: "+".join(n.split(".")[0] for n in names))
+def test_1x_only_spine_exits_2_with_one_line_pointing_at_migrate(tmp_path, capsys, names, fmt):  # 15
+    spine_1x.write_1x(tmp_path, names)
+    spine_1x.write_history(tmp_path)
+    before = _snapshot(tmp_path)
     assert audit.spine_mode(tmp_path) is None
-    assert audit.main(["--cwd", str(tmp_path)]) == 0
 
-    (tmp_path / "STATE.md").unlink()
-    assert audit.main(["--cwd", str(tmp_path)]) == 1
+    capsys.readouterr()
+    assert audit.main(["--cwd", str(tmp_path), "--format", fmt]) == 2
+    captured = capsys.readouterr()
+    lines = [ln for ln in (captured.out + captured.err).splitlines() if ln.strip()]
+    assert len(lines) == 1
+    assert "/cairn migrate" in lines[0]
+    for code in CODES_1X + [LEGACY]:
+        assert code not in lines[0]
+    assert _snapshot(tmp_path) == before
 
 
-def test_both_spines_run_both_check_sets(tmp_path):  # 3
-    root = _build(tmp_path, project_type="novel", tree=False)
-    spine_1x.render_1x({"project_name": "demo", "intent": "why", "project_type": "novel",
-                        "adoption": "brownfield"}, root, date.today().isoformat())
+@pytest.mark.parametrize("mode", MODES)
+def test_2_0_spine_never_emits_1x_codes(tmp_path, capsys, mode):  # 16
+    root = _build(tmp_path, mode, adoption="brownfield")
+    top = _top(mode)
+    # Everything the 1.x checks used to flag, none of which 2.0 audits.
+    _write(root, top + "decisions/0001-dup.md", "# 1. Dup\n")
+    _write(root, top + "decisions/0002-long.md", "# 2. Long\n" + "line\n" * 60)
+    _write(root, top + "decisions/0003-gone.md", "# 3. Gone\n\nStatus: superseded by 9999\n")
+    _write(root, top + "docs/stray.md", "# stray\n")
+    _write(root, top + "docs/ghost.md", "<!-- covers: src/missing.py -->\n# ghost\n")
+    _append(root, top + "ARCHITECTURE.md", "\n```mermaid\nflowchart TD\nA-->B\n```\n")
+    pages.run(root, _page(mode))
+    if mode == "tracked":  # docs/ is a paged folder here: give the new files their lines
+        _append(root, "docs/CLAUDE.md", "- `stray.md`: a stray page\n- `ghost.md`: a ghost page\n")
+
+    code, payload = _audit_json(root, capsys)
+    found ={f["code"] for f in payload["findings"]}
+    assert not found & set(CODES_1X + [LEGACY])
+    assert found <= set(CODES)
+    assert code == 0
+    assert payload["findings"] == []
+
+
+@pytest.mark.parametrize("names", [spine_1x.NAMES, ("STATE.md",), ("THEORY.md",)],
+                         ids=["all-five", "state", "theory"])
+@pytest.mark.parametrize("mode", MODES)
+def test_leftover_1x_files_give_one_info_naming_migrate(tmp_path, capsys, mode, names):  # 17
+    root = _build(tmp_path, mode)
+    spine_1x.write_1x(root, names, top=".docs-local" if mode == "local" else "")
+    before = _snapshot(root)
+
+    code, payload = _audit_json(root, capsys)
+    assert code == 0
+    assert [(f["severity"], f["code"]) for f in payload["findings"]] == [("INFO", LEGACY)]
+    assert "/cairn migrate" in payload["findings"][0]["message"]
+    assert _snapshot(root) == before
+
+
+def test_leftover_1x_files_run_2_0_checks_only(tmp_path, capsys):  # 17
+    root = _build(tmp_path)
+    spine_1x.write_1x(root, texts={
+        "THEORY.md": "# Theory\n\nStill tagged. (inferred - confirm)\n",
+        "CONVENTIONS.md": "# Conventions\n\n- **Ghost.** Cites [[0999-ghost]].\n",
+        "STATE.md": "# State\n\n_Generated 2020-01-01._\n" + "line\n" * 100,
+        "MAP.md": ("# Map\n\n| C | R | S | Deep doc |\n|---|---|---|---|\n"
+                   "| x | y | z | docs/nope.md |\n"),
+    })
     _pad_to(root, "README.md", 2049)
-    findings = audit.run_audit(root) + audit.run_checks(root, "tracked")
-    codes = {f.code for f in findings if f.severity in ("ERROR", "WARN")}
-    assert {"INFERRED-TAG", "SIZE-BUDGET"} <= codes
-    assert audit.main(["--cwd", str(root)]) == 1
+
+    code, payload = _audit_json(root, capsys)
+    assert code == 1
+    assert sorted(f["code"] for f in payload["findings"]) == [LEGACY, "SIZE-BUDGET"]
+    assert payload["summary"] == {"errors": 1, "warnings": 0, "infos": 1}
 
 
 BREAKERS = {
@@ -479,15 +563,13 @@ def _section(tag):
     return re.search(rf"<{tag}>(.*?)</{tag}>", _skill(), re.S).group(1)
 
 
-def test_maintain_section_for_2_0_spine_keeps_1x_branch():  # 24
+def test_maintain_section_is_2_0_only():  # 24, 18
     maintain = _section("maintain-subcommand")
-    two, one_x = maintain.split("1.x steps (until")
     for needle in ["audit.py", "pages.py", "uncommitted", "Do NOT commit",
                    "TOUCH the pages", "never create or regenerate"]:
-        assert needle in two, needle
-    assert "REGENERATE STATE.md" not in two
-    assert "REGENERATE STATE.md" in one_x
-    assert "TOUCH MAP.md" in one_x
+        assert needle in maintain, needle
+    for gone in ["1.x steps", "REGENERATE STATE.md", "TOUCH MAP.md", "follow the 1.x"]:
+        assert gone not in maintain, gone
 
 
 def test_audit_section_states_exit_1_in_both_modes_and_no_no_spine_note():  # 25
@@ -496,6 +578,43 @@ def test_audit_section_states_exit_1_in_both_modes_and_no_no_spine_note():  # 25
     assert "both modes" in audit_section
     assert "audit reports no spine" not in _skill()
     assert "2.0 spine" in _section("context")
+
+
+def test_audit_section_says_exit_2_on_a_1x_spine():  # 18
+    audit_section = _section("audit-subcommand")
+    assert "exit 2" in audit_section.lower()
+    assert "1.x" in audit_section
+    assert "/cairn migrate" in audit_section
+    for gone in ["MAP-DOC-MISSING", "STATE-STALE", "DOCS-STALE", "a 1.x spine gives"]:
+        assert gone not in audit_section, gone
+
+
+def test_skill_drops_the_1x_branches():  # 18
+    text = _skill()
+    for gone in ["1.x steps", "follow the 1.x", "REGENERATE STATE.md", "TOUCH MAP.md",
+                 "until the 2.0 build retires", "keeps the 1.x checks", "On a 1.x spine",
+                 "MAP-DOC-MISSING", "STATE-STALE", "DOCS-STALE", "THEORY.md.template",
+                 "DOCS-SYSTEM.md.template"]:
+        assert gone not in text, gone
+
+
+def _migrate_text():
+    """The migrate section when SKILL.md tags one, else the whole file."""
+    found = re.search(r"<migrate-subcommand>(.*?)</migrate-subcommand>", _skill(), re.S)
+    return found.group(1) if found else _skill()
+
+
+def test_skill_documents_migrate():  # 18
+    text = _skill()
+    dispatch = text[text.index("0. DISPATCH"):text.index("1. CONFIRM")]
+    assert "`migrate`" in dispatch
+    section = _migrate_text()
+    low = section.lower()
+    assert 'migrate.py' in section
+    assert "--apply" in section
+    for needle in ["dry run", "budget", "route", "state.md", "uncommitted"]:
+        assert needle in low, needle
+    assert 'python "{skill-dir}/migrate.py" --cwd .' in section
 
 
 # ------------------------------------- code-ness from ARCHITECTURE.md (amendment)

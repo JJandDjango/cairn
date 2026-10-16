@@ -5,31 +5,30 @@
 > _Generated 2026-10-15._
 
 ## Now
-- **Cairn 2.0 Pass 5 done** on `build-2.0-pass-5`. `audit.py` runs five
-  2.0 checks (`SIZE-BUDGET`, `AT-IMPORT`, `LINK-BROKEN`, `GEN-STALE`,
-  `COVER-PAGE`/`COVER-FILE`; all ERROR, exit 1) in tracked and local mode.
-  `pages.plan()` is the no-write step behind freshness and coverage.
-  Detection: `ARCHITECTURE.md` at the root or in `.docs-local/`; a folder
-  with both spines runs both check sets, neither exits 2. Tracked mode
-  writes `.github/workflows/cairn-audit.yml` (no-clobber, every type);
-  it clones the cairn repo at `CAIRN_REF: main`, so it works for other
-  projects only once the repo is public. `/cairn maintain` has a 2.0
-  branch with no `STATE.md`. Features 22-28 are green in
+- **Cairn 2.0 Pass 6 done** on `build-2.0-pass-6`. New `migrate.py`
+  (`/cairn migrate`): a dry run prints one line per 1.x file; `--apply`
+  renames `MAP.md` to `ARCHITECTURE.md`, appends `THEORY.md` there and
+  `CONVENTIONS.md` / `DOCS-SYSTEM.md` into `CONTRIBUTING.md` under
+  `## From <FILE>.md`, and removes a source only after its text is found
+  in the destination. It never touches `STATE.md` (Claude routes its parts,
+  trims to budget, then removes it) or `decisions/` and `docs/`. Local mode
+  migrates inside `.docs-local/`. Features 29, 30 are green in
   `docs/usage-2.0.md`.
-- **Two-Key held**: verifier PASS on attempt 1 (283 passed, 0 skipped),
-  plus an end-to-end break-each-check run in both modes. Developer and
-  verifier ran as subagents in one workflow.
-- **Code detection ruled 2026-10-15**: audit reads a project as code
-  from the status-command table row in `ARCHITECTURE.md` (outside a
-  code fence); with no row it falls back to a folder page existing. A
-  code project with its pages deleted now gets `COVER-PAGE`. Verifier
-  PASS on attempt 2 (293 passed); attempt 1 let prose mentions of
-  `/cairn status` count as the marker.
-- **The 1.x checks remain** until Pass 6; this repo still audits as 1.x.
+- **1.x retired**: the five 1.x templates and every 1.x check are gone from
+  `audit.py`. A 1.x-only spine audits to exit 2 with a pointer to
+  `/cairn migrate`; a 2.0 spine with leftover 1.x files gets one INFO,
+  `LEGACY-1X`. **This repo is a 1.x spine, so its own audit exits 2 until
+  Pass 7** (its CI does not run the audit).
+- **Two-Key held**: verifier PASS on attempt 1 (347 passed, 0 skipped),
+  plus hand probes (CRLF, empty sources, existing destinations, local
+  mode, write failure). Test author, developer and verifier ran as
+  subagents (Sonnet 5.5) in one workflow; the developer never read `tests/`.
+- **Feature 29 ruled 2026-10-15**: report-first; the script does the
+  mechanical moves, Claude does the judgment calls.
 - **The build plan** is `plan.md` at the repo root (untracked). Each
   pass: test list for approval, build, verifier, PR, CI, merge.
-- **Known audit warnings**: `BUDGET-ADR` on 0007 (accepted scar); three
-  `CONV-SUPERSEDED` on CONVENTIONS.md, by design (Pass 7 retires it).
+- **Known audit warnings**: none now (the 1.x checks that raised
+  `BUDGET-ADR` and `CONV-SUPERSEDED` are retired).
 - **Skill install is a junction** - `~/.claude/skills/cairn` ->
   `E:\cairn\skills\cairn`; remove it before the marketplace install-test.
 
@@ -37,17 +36,17 @@
 - None.
 
 ## Next actions
-1. **Pass 6, migration and retirement** (features 29, 30): rule on
-   feature 29's behavior first; then retire the six-strata templates and
-   checks. Unit test list for approval.
-2. **Pass 7, dogfood and release** (31); pin `CAIRN_REF` to `2.0.0`.
-3. Before Pass 7 removes Cairn's own `STATE.md`: update the
+1. **Pass 7, dogfood and release** (31): Cairn adopts 2.0 in this repo
+   (migrate it with `/cairn migrate`); `docs/usage-2.0.md` replaces
+   `USAGE.md`; rewrite `README.md`; version `2.0.0`; pin `CAIRN_REF`.
+2. Before Pass 7 removes Cairn's own `STATE.md`: update the
    `resume-session`, `handoff-session` and `end-session` skills.
-4. Deferred carry-overs (`plan.md`): Pass 5 verifier nits (`AT-IMPORT`
-   flags `@` after `/` or `(` in prose; reference-style links not
-   checked; `MAP.md` rows for `audit.py` and `render.py` stale); Pass 4,
-   3, 2 nits; `--answers` non-object JSON; `required_status_checks`;
-   drop `_v0` from test names. Publish HELD.
+3. Deferred carry-overs (`plan.md`): Pass 6 verifier nits (non-atomic
+   `migrate._merge` write; duplicate `## From` heading; CRLF separator;
+   `.docs-local` 1.x pointer mismatch between audit and migrate); Pass 5,
+   4, 3, 2 nits (`MAP.md` rows for `audit.py` and `render.py` are stale);
+   `--answers` non-object JSON; `required_status_checks`; drop `_v0` from
+   test names. Publish HELD.
 
 ## Open questions
-- Feature 29 (1.x migration behavior), ruled at the start of Pass 6.
+- None.
